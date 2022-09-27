@@ -10,23 +10,11 @@ jobs:
   pre-commit:
     name: Pre-Commit
     uses: ./.github/workflows/_pre_commit.yml
-  #   name: Pre-Commit framework
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: checkout code
-  #       uses: actions/checkout@v3
-  #     - name: run pre-commit
-  #       uses: ./.github/actions/pre_commit
+
 
   checkov:
     name: Checkov
     uses: ./.github/workflows/_checkov.yml
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: checkout code
-  #       uses: actions/checkout@v3
-  #     - name: run checkov
-  #       uses: ./.github/actions/checkov
 
 
   tf_prereqs:
