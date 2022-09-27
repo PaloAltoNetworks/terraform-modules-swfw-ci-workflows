@@ -1,10 +1,11 @@
 name: (sub) Pre-Commit framework run
 
 permissions:
-  content: read
+  contents: read
 
 defaults:
-  shell: bash
+  run:
+    shell: bash
 
 on: 
   workflow_call:
