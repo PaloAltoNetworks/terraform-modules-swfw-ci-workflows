@@ -12,7 +12,7 @@ on:
 
 jobs:
   pre_commit_framework:
-    name: Pre-Commit framework
+    name: Framework run
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

@@ -1,4 +1,4 @@
-name: PR CI
+name: (sub) PR CI
 
 permissions:
   contents: read
@@ -8,7 +8,7 @@ on:
 
 jobs:
   pre-commit:
-    name: Pre-Commit framework
+    name: Pre-Commit
     uses: ./.github/workflows/_pre_commit.yml
   #   name: Pre-Commit framework
   #   runs-on: ubuntu-latest
@@ -19,7 +19,7 @@ jobs:
   #       uses: ./.github/actions/pre_commit
 
   checkov:
-    name: Scan Terraform code with Checkov
+    name: Checkov
     uses: ./.github/workflows/_checkov.yml
   #   runs-on: ubuntu-latest
   #   steps:
