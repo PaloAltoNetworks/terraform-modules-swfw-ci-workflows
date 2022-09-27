@@ -1,0 +1,29 @@
+name: (sub) BridgeCrew Checkov
+
+permissions:
+  contents: read
+
+on: 
+  workflow_call:
+
+jobs:
+  pre_commit_framework:
+    name: Pre-Commit framework
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+
+      - name: Test with Checkov
+        id: checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: .
+          framework: terraform 
+          soft_fail: true
+          quiet: true

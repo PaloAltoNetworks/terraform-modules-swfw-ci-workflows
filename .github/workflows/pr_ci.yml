@@ -18,8 +18,9 @@ jobs:
   #     - name: run pre-commit
   #       uses: ./.github/actions/pre_commit
 
-  # checkov:
-  #   name: Scan Terraform code with Checkov
+  checkov:
+    name: Scan Terraform code with Checkov
+    uses: ./.github/workflows/_checkov.yml
   #   runs-on: ubuntu-latest
   #   steps:
   #     - name: checkout code
