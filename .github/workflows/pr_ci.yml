@@ -1,30 +1,20 @@
-name: PR CI
+name: (sub) PR CI
 
 permissions:
   contents: read
 
 on:
-  pull_request:
-    branches: ['main']
+  workflow_call:
 
 jobs:
   pre-commit:
-    name: Pre-Commit framework
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout code
-        uses: actions/checkout@v3
-      - name: run pre-commit
-        uses: ./.github/actions/pre_commit
+    name: Pre-Commit
+    uses: ./.github/workflows/_pre_commit.yml
+
 
   checkov:
-    name: Scan Terraform code with Checkov
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout code
-        uses: actions/checkout@v3
-      - name: run checkov
-        uses: ./.github/actions/checkov
+    name: Checkov
+    uses: ./.github/workflows/_checkov.yml
 
 
   tf_prereqs:
@@ -32,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       validate_paths: ${{ steps.format.outputs.dir_diff }}
-      plan_paths: ${{ steps.deps.outputs.examples }}
+      # plan_paths: ${{ steps.deps.outputs.examples }}
     steps:
       - name: checkout code
         uses: actions/checkout@v3
@@ -55,22 +45,22 @@ jobs:
         run: |
           echo "::set-output name=dir_diff::$(echo -n "$DIFFS" | sed -E "s/^(modules|examples)\/(.+)\/.*$/\1\/\2/"  | tr '\n' ',')"
 
-      - name: discover module->example dependencies
-        id: deps
-        env:
-          DIFFS: ${{ steps.format.outputs.dir_diff }}
-        shell: bash
-        run: |
-          if [ "$DIFFS" ]; then
-            EXAMPLES_DISCOVERY=$(for M in $(echo "$DIFFS" | tr ',' '\n' | grep modules); do
-              echo $(grep -rl "$M" examples/*/*.tf | sed -E "s/^(examples\/.*)\/.*$/\1/g")
-            done | sort -u | awk NF)
+      # - name: discover module->example dependencies
+      #   id: deps
+      #   env:
+      #     DIFFS: ${{ steps.format.outputs.dir_diff }}
+      #   shell: bash
+      #   run: |
+      #     if [ "$DIFFS" ]; then
+      #       EXAMPLES_DISCOVERY=$(for M in $(echo "$DIFFS" | tr ',' '\n' | grep modules); do
+      #         echo $(grep -rl "$M" examples/*/*.tf | sed -E "s/^(examples\/.*)\/.*$/\1/g")
+      #       done | sort -u | awk NF)
 
-            EXAMPLES_COMBINED=$(echo "$(echo $EXAMPLES_DISCOVERY | tr ' ' ','),$DIFFS" | tr ',' '\n' | awk NF | grep examples | sort -u)
+      #       EXAMPLES_COMBINED=$(echo "$(echo $EXAMPLES_DISCOVERY | tr ' ' ','),$DIFFS" | tr ',' '\n' | awk NF | grep examples | sort -u)
 
-            echo "::set-output name=examples::$(echo -n $EXAMPLES_COMBINED | jq -R -s -c 'split(" ")')"
-          fi
-    
+      #       echo "::set-output name=examples::$(echo -n $EXAMPLES_COMBINED | jq -R -s -c 'split(" ")')"
+      #     fi
+
 
   validate:
     name: validate all changed modules
