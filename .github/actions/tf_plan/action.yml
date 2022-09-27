@@ -1,0 +1,32 @@
+name: 'TF plan'
+description: 'Runs Terraform plan for a specified path.'
+inputs:
+  tf_version:  # id of input
+    description: 'TF version used to validate code.'
+    required: true
+  path:
+    description: 'Path to code that will be validated.'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: login to Azure
+      uses: azure/login@v1
+      with:
+        client-id: ${{ env.ARM_CLIENT_ID }}
+        tenant-id: ${{ env.ARM_TENANT_ID }}
+        subscription-id: ${{ env.ARM_SUBSCRIPTION_ID }}
+
+    - name: setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: ${{ inputs.tf_version }}
+        
+    - name: plan
+      run: |
+        cd "$GITHUB_WORKSPACE"/${{ inputs.path }}
+        terraform -version
+        terraform init
+        # terraform plan -var-file=example.tfvars -var 'files={"files/authcodes.sample" = "license/authcodes", "files/init-cfg.sample.txt" = "config/init-cfg.txt"}' -var "resource_group_name=$(uuidgen)"
+        terraform plan -var-file=example.tfvars -var "resource_group_name=$(uuidgen)"
+      shell: bash

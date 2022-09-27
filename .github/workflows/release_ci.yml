@@ -1,0 +1,165 @@
+name: Release CI
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  # schedule:
+  #   - cron: figure out how often we woud like to release
+
+jobs:
+  release-prereqs:
+    name: Verify if a release is required
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: read
+    outputs:
+      rc: ${{ steps.rc.outputs.new_release_published }}
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+
+      - name: dry-run sem versioning
+        id: rc
+        uses: cycjimmy/semantic-release-action@v3
+        with:
+          dry_run: true
+          semantic_version: 19.0
+          extra_plugins: |
+            conventional-changelog-conventionalcommits@^5.0.0
+            @semantic-release/git@^10.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: sem ver outputs
+        run: |
+          echo new_release_published - ${{ steps.rc.outputs.new_release_published }}
+          echo new_release_version - ${{ steps.rc.outputs.new_release_version }}
+          echo last_release_version - ${{ steps.rc.outputs.last_release_version }}
+
+
+  pre-commit:
+    name: pre-commit framework
+    needs: [release-prereqs]
+    if: needs.release-prereqs.outputs.rc  == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+
+      - name: run pre-commit
+        uses: ./.github/actions/pre_commit
+
+
+  checkov:
+    name: Scan Terraform code with Checkov
+    needs: [release-prereqs]
+    if: needs.release-prereqs.outputs.rc  == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+
+      - name: run checkov
+        uses: ./.github/actions/checkov
+
+
+  validate_prereqs:
+    name: validate prerequisites
+    needs: [release-prereqs]
+    if: needs.release-prereqs.outputs.rc  == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      paths: ${{ steps.paths.outputs.paths }}
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+      - name: set outputs
+        id: paths
+        shell: bash
+        run: |
+          echo "::set-output name=paths::$(echo $(ls -d1 examples/* modules/*) | tr ' ' ',')"
+
+
+  validate:
+    name: validate terraform code
+    needs: [validate_prereqs]
+    if: ${{ needs.validate_prereqs.outputs.paths != '' }}
+    uses: ./.github/workflows/_tf_validate.yml
+    with:
+      tf_version: 0.15 1.0 1.1 1.2 1.3
+      paths: ${{ needs.validate_prereqs.outputs.paths }}
+
+
+  # plan_prereqs:
+  #   name: plan prerequisites
+  #   needs: [validate]
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     paths: ${{ steps.paths.outputs.paths }}
+  #   steps:
+  #     - name: checkout code
+  #       uses: actions/checkout@v3
+  #     - name: set outputs
+  #       id: paths
+  #       shell: bash
+  #       run: |
+  #         echo "::set-output name=paths::$(echo -n $(ls -d1 examples/*) | jq -R -s -c 'split(" ")')"
+
+
+  # plan:
+  #   name: 'plan: ${{ matrix.path }}'
+  #   needs: [plan_prereqs]
+  #   if: ${{ needs.plan_prereqs.outputs.paths != '' }}
+  #   strategy:
+  #     matrix:
+  #       path: ${{ fromJson(needs.plan_prereqs.outputs.paths) }}
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     id-token: write
+  #   steps:
+  #     - name: checkout code
+  #       uses: actions/checkout@v3
+
+  #     - name: run plan
+  #       uses: ./.github/actions/tf_plan
+  #       env:
+  #         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  #         ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  #         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  #         ARM_USE_OIDC: true
+  #       with:
+  #         path: ${{ matrix.path }}
+  #         tf_version: '1.2'
+
+
+  release:
+    name: release sem version
+    needs: 
+      - validate
+      - checkov
+      - pre-commit
+      # - plan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: read
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v3
+
+      - name: Create release and publish
+        uses: cycjimmy/semantic-release-action@v3
+        with:
+          semantic_version: 19.0
+          extra_plugins: |
+            conventional-changelog-conventionalcommits@^5.0.0
+            @semantic-release/git@^10.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
