@@ -13,14 +13,14 @@ jobs:
   pre_commit_framework:
     name: Pre-Commit framework
     runs-on: ubuntu-latest
-    stpes:
+    steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9.4'
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9.4'
 
       - name: Run pre-commit framework as the developer should run it
         run: sudo ./scripts/install.sh && sudo ./scripts/run.sh
