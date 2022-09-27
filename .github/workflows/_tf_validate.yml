@@ -3,6 +3,10 @@ name: (sub) TF validate
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+    
 on:
   workflow_call:
     inputs:
@@ -14,22 +18,6 @@ on:
         description: Path to module that will be tested, a space delimited list of relative paths
         type: string
         required: true
-  workflow_dispatch:
-    inputs:
-      tf_version:
-        description: |
-          Version of TF we validate with,
-          a space delimited list.
-        type: string
-        required: true
-        default: 0.15 1.2
-      paths:
-        description: |
-          Path to module that will be tested,
-          a space delimited list of paths relative to repo's root.
-        type: string
-        required: true
-        default: modules/vmseries
 
 jobs:
   prerequisites:
@@ -44,8 +32,7 @@ jobs:
         run: |
           echo "::set-output name=paths::$(echo -n "${{ inputs.paths }}" | jq -R -s -c 'split(",")')"
           echo "::set-output name=tf_versions::$(echo "${{ inputs.tf_version }} " | jq -R -s -c 'split(" ")[:-1]')"
-        shell: bash
-
+        
   validate:
     needs: [prerequisites]
     name: '${{ matrix.path }}@${{ matrix.tf_version }}'
@@ -57,8 +44,16 @@ jobs:
     steps:
       - name: checkout code
         uses: actions/checkout@v3
-      - name: run validation
-        uses: ./.github/actions/tf_validate
+
+      - name: setup Terraform
+        uses: hashicorp/setup-terraform@v2
         with:
-          path: ${{ matrix.path }}
-          tf_version: ${{ matrix.tf_version }}
+          terraform_version: ${{ matrix.tf_version }}
+
+      - name: run validation for ${{ matrix.path }}
+        run: |
+          cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
+          terraform -version
+          terraform init -backend=false
+          terraform validate
+        

@@ -8,7 +8,7 @@ on:
 
 jobs:
   pre_commit_framework:
-    name: Framework run
+    name: Checkov
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

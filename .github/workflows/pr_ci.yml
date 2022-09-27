@@ -29,59 +29,59 @@ jobs:
   #       uses: ./.github/actions/checkov
 
 
-  # tf_prereqs:
-  #   name: terraform modules discovery
-  #   runs-on: ubuntu-latest
-  #   outputs:
-  #     validate_paths: ${{ steps.format.outputs.dir_diff }}
-  #     plan_paths: ${{ steps.deps.outputs.examples }}
-  #   steps:
-  #     - name: checkout code
-  #       uses: actions/checkout@v3
-  #       with:
-  #         fetch-depth: 0
+  tf_prereqs:
+    name: terraform modules discovery
+    runs-on: ubuntu-latest
+    outputs:
+      validate_paths: ${{ steps.format.outputs.dir_diff }}
+      plan_paths: ${{ steps.deps.outputs.examples }}
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-  #     - name: get diff with base branch
-  #       id: diff
-  #       uses: tj-actions/changed-files@v31
-  #       with:
-  #         separator: "\n"
-  #         files: |
-  #           modules/**/*.tf
-  #           examples/**/*.tf
+      - name: get diff with base branch
+        id: diff
+        uses: tj-actions/changed-files@v31
+        with:
+          separator: "\n"
+          files: |
+            modules/**/*.tf
+            examples/**/*.tf
 
-  #     - name: extract only changed folders
-  #       id: format
-  #       env:
-  #         DIFFS: ${{ steps.diff.outputs.all_changed_files }}
-  #       run: |
-  #         echo "::set-output name=dir_diff::$(echo -n "$DIFFS" | sed -E "s/^(modules|examples)\/(.+)\/.*$/\1\/\2/"  | tr '\n' ',')"
+      - name: extract only changed folders
+        id: format
+        env:
+          DIFFS: ${{ steps.diff.outputs.all_changed_files }}
+        run: |
+          echo "::set-output name=dir_diff::$(echo -n "$DIFFS" | sed -E "s/^(modules|examples)\/(.+)\/.*$/\1\/\2/"  | tr '\n' ',')"
 
-  #     - name: discover module->example dependencies
-  #       id: deps
-  #       env:
-  #         DIFFS: ${{ steps.format.outputs.dir_diff }}
-  #       shell: bash
-  #       run: |
-  #         if [ "$DIFFS" ]; then
-  #           EXAMPLES_DISCOVERY=$(for M in $(echo "$DIFFS" | tr ',' '\n' | grep modules); do
-  #             echo $(grep -rl "$M" examples/*/*.tf | sed -E "s/^(examples\/.*)\/.*$/\1/g")
-  #           done | sort -u | awk NF)
+      - name: discover module->example dependencies
+        id: deps
+        env:
+          DIFFS: ${{ steps.format.outputs.dir_diff }}
+        shell: bash
+        run: |
+          if [ "$DIFFS" ]; then
+            EXAMPLES_DISCOVERY=$(for M in $(echo "$DIFFS" | tr ',' '\n' | grep modules); do
+              echo $(grep -rl "$M" examples/*/*.tf | sed -E "s/^(examples\/.*)\/.*$/\1/g")
+            done | sort -u | awk NF)
 
-  #           EXAMPLES_COMBINED=$(echo "$(echo $EXAMPLES_DISCOVERY | tr ' ' ','),$DIFFS" | tr ',' '\n' | awk NF | grep examples | sort -u)
+            EXAMPLES_COMBINED=$(echo "$(echo $EXAMPLES_DISCOVERY | tr ' ' ','),$DIFFS" | tr ',' '\n' | awk NF | grep examples | sort -u)
 
-  #           echo "::set-output name=examples::$(echo -n $EXAMPLES_COMBINED | jq -R -s -c 'split(" ")')"
-  #         fi
-    
+            echo "::set-output name=examples::$(echo -n $EXAMPLES_COMBINED | jq -R -s -c 'split(" ")')"
+          fi
 
-  # validate:
-  #   name: validate all changed modules
-  #   # needs: [tf_prereqs]
-  #   # if: ${{ needs.tf_prereqs.outputs.validate_paths != '' }}
-  #   uses: ./.github/workflows/_tf_validate.yml
-  #   with:
-  #     tf_version: 0.15 1.0 1.1 1.2 1.3
-  #     paths: ${{ needs.tf_prereqs.outputs.validate_paths }}
+
+  validate:
+    name: validate all changed modules
+    needs: [tf_prereqs]
+    if: ${{ needs.tf_prereqs.outputs.validate_paths != '' }}
+    uses: ./.github/workflows/_tf_validate.yml
+    with:
+      tf_version: 0.15 1.0 1.1 1.2 1.3
+      paths: ${{ needs.tf_prereqs.outputs.validate_paths }}
 
 
   # plan:
@@ -116,14 +116,14 @@ jobs:
   #         tf_version: ${{ matrix.tf_version }}
   #         # tf_version: '1.2'
 
-  # branch_protection_junction:
-  #   name: junction point for branch protection
-  #   needs:
-  #     - validate
-  #     - pre-commit
-  #     - checkov
-  #     # - plan
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: branch protection check validation point
-  #       run: echo OK
+  branch_protection_junction:
+    name: junction point for branch protection
+    needs:
+      - validate
+      - pre-commit
+      - checkov
+      # - plan
+    runs-on: ubuntu-latest
+    steps:
+      - name: branch protection check validation point
+        run: echo OK
