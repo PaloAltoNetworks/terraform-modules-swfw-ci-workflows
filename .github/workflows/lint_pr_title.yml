@@ -1,7 +1,7 @@
 name: Lint PR Title
 
-permissions:
-  pull-requests: read
+# permissions:
+#   pull-requests: read
 
 on:
   workflow_call:
