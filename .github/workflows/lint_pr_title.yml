@@ -1,15 +1,20 @@
+# DESCRIPTION:
+#  A workflow used by both: code and CI repositories for verifying 
+#  if PR titles matches conventional commits strategy.
+# END
+
 name: Lint PR Title
 
-# permissions:
-#   pull-requests: read
+permissions:
+  pull-requests: read
 
 on:
   workflow_call:
-  # pull_request_target:
-  #   types:
-  #     - opened
-  #     - edited
-  #     - synchronize
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - synchronize
 
 jobs:
   main:
