@@ -10,18 +10,73 @@ defaults:
 on: 
   workflow_call:
 
+env:
+  REQUIREMENTS: >
+    appdirs==1.4.4
+    cfgv==3.2.0
+    click==7.1.2
+    distlib==0.3.1
+    filelock==3.0.12
+    identify==2.2.4
+    importlib-metadata==4.0.1
+    importlib-resources==5.1.2
+    nodeenv==1.6.0
+    pep517==0.10.0
+    pip-tools==6.1.0
+    pre-commit==2.7.1
+    pyyaml==5.4.1
+    six==1.16.0
+    toml==0.10.2
+    typing-extensions==3.10.0.0
+    virtualenv==20.4.6
+    zipp==3.4.1
+
 jobs:
   pre_commit_framework:
     name: Pre-Commit
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9.4'
 
-      - name: Run pre-commit framework as the developer should run it
-        run: sudo ./scripts/install.sh && sudo ./scripts/run.sh
+      - name: prep a working dir
+        run: mkdir tmp
+
+      - name: install TF Docs
+        working-directory: tmp
+        run: |
+          curl -sL https://github.com/terraform-docs/terraform-docs/releases/download/v0.16.0/terraform-docs-v0.16.0-linux-amd64.tar.gz > terraform-docs.tar.gz 
+          tar zxf terraform-docs.tar.gz
+          mv terraform-docs /usr/local/bin/
+          terraform-docs --version
+
+      - name: install TF Sec
+        working-directory: tmp
+        run: |
+          curl -sL https://github.com/tfsec/tfsec/releases/download/v0.34.0/tfsec-linux-amd64 > tfsec
+          chmod +x tfsec
+          mv tfsec /usr/local/bin/
+          tfsec --version
+
+      - name: install TF Lint
+        working-directory: tmp
+        run: |
+          curl -sL https://github.com/terraform-linters/tflint/releases/download/v0.29.0/tflint_linux_amd64.zip > tflint.zip
+          unzip tflint.zip
+          mv tflint /usr/local/bin/
+          tflint --version
+
+      - name: install python requirements
+        run: python3 -m pip install $REQUIREMENTS
+
+      - name: run pre-commit
+        run: |
+          rm -rf tmp
+          pre-commit run --all-files terraform_fmt
+          pre-commit run --all-files terraform_tflint
+          pre-commit run --all-files terraform_docs
