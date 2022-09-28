@@ -1,15 +1,10 @@
-name: Release CI
+name: TF Code Release CI
 
 permissions:
   contents: read
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-  # schedule:
-  #   - cron: figure out how often we woud like to release
+  workflow_call:
 
 jobs:
   release-prereqs:
@@ -44,29 +39,17 @@ jobs:
 
 
   pre-commit:
-    name: pre-commit framework
+    name: Pre-Commit
+    uses: ./.github/workflows/_pre_commit.yml
     needs: [release-prereqs]
     if: needs.release-prereqs.outputs.rc  == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout code
-        uses: actions/checkout@v3
-
-      - name: run pre-commit
-        uses: ./.github/actions/pre_commit
 
 
   checkov:
-    name: Scan Terraform code with Checkov
+    name: Checkov
+    uses: ./.github/workflows/_checkov.yml
     needs: [release-prereqs]
     if: needs.release-prereqs.outputs.rc  == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout code
-        uses: actions/checkout@v3
-
-      - name: run checkov
-        uses: ./.github/actions/checkov
 
 
   validate_prereqs:
