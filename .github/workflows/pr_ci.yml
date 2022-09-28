@@ -112,7 +112,8 @@ jobs:
       - checkov
       # - plan
     if: always()
-    permissions: read-all
+    permissions:
+      actions: read
     runs-on: ubuntu-latest
     steps:
       - name: check statuses of other jobs
@@ -120,4 +121,4 @@ jobs:
 
       - name: branch protection check validation point
         run: | 
-          echo "status: $WORKFLOW_CONCLUSION"
+          if [[ "$WORKFLOW_CONCLUSION" == "failure" ]]; then exit 1; fi
