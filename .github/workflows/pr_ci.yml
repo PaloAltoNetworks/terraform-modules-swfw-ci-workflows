@@ -112,6 +112,7 @@ jobs:
       - checkov
       # - plan
     if: always()
+    permissions: read-all
     runs-on: ubuntu-latest
     steps:
       - name: check statuses of other jobs
