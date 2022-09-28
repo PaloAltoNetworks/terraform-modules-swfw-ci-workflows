@@ -111,7 +111,12 @@ jobs:
       - pre-commit
       - checkov
       # - plan
+    if: always()
     runs-on: ubuntu-latest
     steps:
+      - name: check statuses of other jobs
+        uses: technote-space/workflow-conclusion-action@v3
+
       - name: branch protection check validation point
-        run: echo OK
+        run: | 
+          echo "status: $WORKFLOW_CONCLUSION"
