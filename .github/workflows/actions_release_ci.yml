@@ -33,3 +33,18 @@ jobs:
           echo new_release_published - ${{ steps.rc.outputs.new_release_published }}
           echo new_release_version - ${{ steps.rc.outputs.new_release_version }}
           echo last_release_version - ${{ steps.rc.outputs.last_release_version }}
+          echo new_release_major_version - ${{ steps.rc.outputs.new_release_major_version }}
+          echo new_release_minor_version - ${{ steps.rc.outputs.new_release_minor_version }}
+      
+      - name: create major/minor release tag
+        if: steps.rc.outputs.new_release_published == 'true'
+        env:
+          MAJOR: ${{ steps.rc.outputs.new_release_major_version }}
+          MINOR: ${{ steps.rc.outputs.new_release_minor_version }}
+        run: |
+          git config --global user.email "bot@github.com"
+          git config --global user.name "github-bot"
+          git tag -fa "v$MAJOR" -m "Update v$MAJOR tag"
+          git tag -fa "v$MAJOR.$MINOR" -m "Update v$MAJOR.$MINOR tag"
+          git push origin "v$MAJOR" --force
+          git push origin "v$MAJOR.$MINOR" --force
