@@ -1,0 +1,35 @@
+name: Actions Release CI
+run-name: Actions Release CI
+
+permissions:
+  contents: write
+  issues: read
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    name: Semantic release
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+
+      - name: sem release
+        id: rc
+        uses: cycjimmy/semantic-release-action@v3
+        with:
+          semantic_version: 19.0
+          extra_plugins: |
+            conventional-changelog-conventionalcommits@^5.0.0
+            @semantic-release/git@^10.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: release info
+        run: |
+          echo new_release_published - ${{ steps.rc.outputs.new_release_published }}
+          echo new_release_version - ${{ steps.rc.outputs.new_release_version }}
+          echo last_release_version - ${{ steps.rc.outputs.last_release_version }}
