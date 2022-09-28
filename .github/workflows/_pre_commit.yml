@@ -77,6 +77,6 @@ jobs:
       - name: run pre-commit
         run: |
           rm -rf tmp
-          pre-commit run --all-files terraform_fmt 
-          pre-commit run --all-files terraform_docs 
+          pre-commit run --all-files terraform_fmt
           pre-commit run --all-files terraform_tflint
+          pre-commit run --all-files terraform_docs
