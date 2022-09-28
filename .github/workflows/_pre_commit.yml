@@ -52,7 +52,6 @@ jobs:
         run: |
           curl -sL https://github.com/terraform-docs/terraform-docs/releases/download/v0.16.0/terraform-docs-v0.16.0-linux-amd64.tar.gz > terraform-docs.tar.gz 
           tar zxf terraform-docs.tar.gz
-          rm terraform-docs.tar.gz
           mv terraform-docs /usr/local/bin/
           terraform-docs --version
 
@@ -64,12 +63,11 @@ jobs:
           mv tfsec /usr/local/bin/
           tfsec --version
 
-      - name: install TF Sec
+      - name: install TF Lint
         working-directory: tmp
         run: |
           curl -sL https://github.com/terraform-linters/tflint/releases/download/v0.29.0/tflint_linux_amd64.zip > tflint.zip
           unzip tflint.zip
-          rm tflint.zip
           mv tflint /usr/local/bin/
           tflint --version
 
@@ -78,6 +76,7 @@ jobs:
 
       - name: run pre-commit
         run: |
+          rm -rf tmp
           pre-commit run --all-files terraform_fmt 
           pre-commit run --all-files terraform_docs 
           pre-commit run --all-files terraform_tflint
