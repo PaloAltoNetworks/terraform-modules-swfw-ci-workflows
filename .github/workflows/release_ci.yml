@@ -79,12 +79,56 @@ jobs:
       paths: ${{ needs.validate_prereqs.outputs.paths }}
 
 
+  # plan_prereqs:
+  #   name: plan prerequisites
+  #   needs: [validate]
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     paths: ${{ steps.paths.outputs.paths }}
+  #   steps:
+  #     - name: checkout code
+  #       uses: actions/checkout@v3
+  #     - name: set outputs
+  #       id: paths
+  #       shell: bash
+  #       run: |
+  #         echo "::set-output name=paths::$(echo -n $(ls -d1 examples/*) | jq -R -s -c 'split(" ")')"
+
+
+  # plan:
+  #   name: 'plan: ${{ matrix.path }}'
+  #   needs: [plan_prereqs]
+  #   if: ${{ needs.plan_prereqs.outputs.paths != '' }}
+  #   strategy:
+  #     matrix:
+  #       path: ${{ fromJson(needs.plan_prereqs.outputs.paths) }}
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     id-token: write
+  #   steps:
+  #     - name: checkout code
+  #       uses: actions/checkout@v3
+
+  #     - name: run plan
+  #       uses: ./.github/actions/tf_plan
+  #       env:
+  #         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  #         ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  #         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  #         ARM_USE_OIDC: true
+  #       with:
+  #         path: ${{ matrix.path }}
+  #         tf_version: '1.2'
+
+
   release:
     name: release sem version
     needs: 
       - validate
       - checkov
       - pre-commit
+      # - plan
     runs-on: ubuntu-latest
     permissions:
       contents: write
