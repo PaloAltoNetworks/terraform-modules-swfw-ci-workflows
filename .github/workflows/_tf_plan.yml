@@ -1,0 +1,56 @@
+name: (sub) TF plan
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+    
+on:
+  workflow_call:
+    inputs:
+      tf_version:
+        description: Version of TF we validate with, a space delimited list.
+        type: string
+        required: true
+      paths:
+        description: Path to module that will be tested, a space delimited list of relative paths
+        type: string
+        required: true
+
+jobs:
+  prerequisites:
+    name: prep data for matrix strategy
+    runs-on: ubuntu-latest
+    outputs:
+      paths: ${{ steps.preqs.outputs.paths }}
+      tf_versions: ${{ steps.preqs.outputs.tf_versions }}
+    steps:
+      - name: set outputs
+        id: preqs
+        run: |
+          echo "::set-output name=paths::$(echo -n "${{ inputs.paths }}" | jq -R -s -c 'split(",")')"
+          echo "::set-output name=tf_versions::$(echo "${{ inputs.tf_version }} " | jq -R -s -c 'split(" ")[:-1]')"
+        
+  plan:
+    needs: [prerequisites]
+    name: '${{ matrix.path }}@${{ matrix.tf_version }}'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tf_version: ${{ fromJson(needs.prerequisites.outputs.tf_versions) }}
+        path: ${{ fromJson(needs.prerequisites.outputs.paths) }}
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+
+      - name: setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ matrix.tf_version }}
+
+      - name: run validation for ${{ matrix.path }}
+        run: |
+          cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
+          make plan
