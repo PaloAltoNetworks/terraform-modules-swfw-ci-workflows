@@ -62,6 +62,15 @@ jobs:
             echo "::set-output name=examples::$(echo -n $EXAMPLES_COMBINED | tr ' ' ',')"
           fi
 
+      - name: show outputs
+        env:
+          validate_paths: ${{ steps.format.outputs.dir_diff }}
+          plan_paths: ${{ steps.deps.outputs.examples }}
+        run: | 
+          echo $validate_paths
+          echo $plan_paths
+
+
 
   # validate:
   #   name: validate all changed modules
