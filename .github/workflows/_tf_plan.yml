@@ -51,6 +51,11 @@ jobs:
           terraform_version: ${{ matrix.tf_version }}
 
       - name: run validation for ${{ matrix.path }}
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_USE_OIDC: true
         run: |
           cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
           make plan
