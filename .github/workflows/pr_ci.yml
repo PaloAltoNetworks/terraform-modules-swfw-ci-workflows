@@ -82,14 +82,14 @@ jobs:
   #     paths: ${{ needs.tf_prereqs.outputs.validate_paths }}
 
 
-  # plan:
-  #   name: '${{ matrix.path }}@${{ matrix.tf_version }}'
-  #   needs: [tf_prereqs]
-  #   if: ${{ needs.tf_prereqs.outputs.plan_paths != '' }}
-  #   uses: ./.github/workflows/_tf_plan.yml
-  #   with:
-  #     tf_version: 1.2 #0.15 1.0 1.1 1.2 1.3
-  #     paths: ${{ needs.tf_prereqs.outputs.validate_paths }}
+  plan:
+    name: run plan changed examples and dependencies
+    needs: [tf_prereqs]
+    if: ${{ needs.tf_prereqs.outputs.plan_paths != '' }}
+    uses: ./.github/workflows/_tf_plan.yml
+    with:
+      tf_version: 1.2 #0.15 1.0 1.1 1.2 1.3
+      paths: ${{ needs.tf_prereqs.outputs.validate_paths }}
     
   #   strategy:
   #     matrix:
