@@ -64,7 +64,7 @@ jobs:
         with:
           terraform_version: ${{ matrix.tf_version }}
 
-      - name: run validation for ${{ matrix.path }}
+      - name: run ${{ inputs.action }} for ${{ matrix.path }}
         env:
           ARM_CLIENT_ID: ${{ secrets.client_id }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
