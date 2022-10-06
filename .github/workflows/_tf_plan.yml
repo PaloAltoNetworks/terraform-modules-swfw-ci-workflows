@@ -68,6 +68,4 @@ jobs:
           ARM_USE_OIDC: true
         run: |
           cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
-          echo "Client ID - $ARM_CLIENT_ID"
-          env | grep ARM
           make plan
