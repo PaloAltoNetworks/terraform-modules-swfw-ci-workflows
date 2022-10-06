@@ -18,6 +18,13 @@ on:
         description: Path to module that will be tested, a space delimited list of relative paths
         type: string
         required: true
+    secrets:
+      client_id:
+        required: true
+      subscirption:
+        required: true
+      tenant:
+        required: true
 
 jobs:
   prerequisites:
@@ -55,11 +62,12 @@ jobs:
 
       - name: run validation for ${{ matrix.path }}
         env:
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_CLIENT_ID: ${{ secrets.client_id }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
+          ARM_TENANT_ID: ${{ secrets.tenant }}
           ARM_USE_OIDC: true
         run: |
           cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
           echo "Client ID - $ARM_CLIENT_ID"
+          env | grep ARM
           make plan
