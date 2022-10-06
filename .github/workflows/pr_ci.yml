@@ -90,6 +90,7 @@ jobs:
     with:
       tf_version: 1.2 #0.15 1.0 1.1 1.2 1.3
       paths: ${{ needs.tf_prereqs.outputs.validate_paths }}
+    secrets: inherit
     
   #   strategy:
   #     matrix:
