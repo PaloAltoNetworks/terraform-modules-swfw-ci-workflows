@@ -84,7 +84,7 @@ jobs:
     name: run plan changed examples and dependencies
     needs: [tf_prereqs]
     if: ${{ needs.tf_prereqs.outputs.plan_paths != '' }}
-    uses: ./.github/workflows/_tf_plan.yml
+    uses: ./.github/workflows/_tf_plan_apply.yml
     permissions:
       contents: read
       id-token: write
