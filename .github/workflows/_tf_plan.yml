@@ -36,6 +36,9 @@ jobs:
   plan:
     needs: [prerequisites]
     name: '${{ matrix.path }}@${{ matrix.tf_version }}'
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     strategy:
       matrix:
