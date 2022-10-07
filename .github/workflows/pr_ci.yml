@@ -63,10 +63,10 @@ jobs:
               echo $(grep -rl "$M" examples/*/*.tf | sed -E "s/^(examples\/.*)\/.*$/\1/g")
             done | sort -u | awk NF)
 
-            EXAMPLES_COMBINED=$(echo "$(echo $EXAMPLES_DISCOVERY | tr ' ' ','),$DIFFS" | tr ',' '\n' | awk NF | grep examples | sort -u)
-
-            # echo "::set-output name=examples::$(echo -n $EXAMPLES_COMBINED | jq -R -s -c 'split(" ")')"
-            echo "::set-output name=examples::$(echo -n $EXAMPLES_COMBINED | tr ' ' ',')"
+            if [ "$(echo "$(echo $EXAMPLES_DISCOVERY | tr ' ' ','),$DIFFS" | grep examples)" ]; then
+              EXAMPLES_COMBINED=$(echo "$(echo $EXAMPLES_DISCOVERY | tr ' ' ','),$DIFFS" | tr ',' '\n' | awk NF | grep examples | sort -u)
+              echo "::set-output name=examples::$(echo -n $EXAMPLES_COMBINED | tr ' ' ',')"
+            fi
           fi
 
 
