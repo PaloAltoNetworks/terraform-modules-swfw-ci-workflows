@@ -1,4 +1,4 @@
-name: (sub) TF validate
+name: (sub) TF plan/apply
 
 permissions:
   contents: read
@@ -18,6 +18,17 @@ on:
         description: Path to module that will be tested, a space delimited list of relative paths
         type: string
         required: true
+      action:
+        description: The action to run on module, either `plan` or `apply`
+        type: string
+        required: true
+    secrets:
+      client_id:
+        required: true
+      subscirption:
+        required: true
+      tenant:
+        required: true
 
 jobs:
   prerequisites:
@@ -33,9 +44,12 @@ jobs:
           echo "::set-output name=paths::$(echo -n "${{ inputs.paths }}" | jq -R -s -c 'split(",")')"
           echo "::set-output name=tf_versions::$(echo "${{ inputs.tf_version }} " | jq -R -s -c 'split(" ")[:-1]')"
         
-  validate:
+  action:
     needs: [prerequisites]
     name: '${{ matrix.path }}@${{ matrix.tf_version }}'
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -50,7 +64,13 @@ jobs:
         with:
           terraform_version: ${{ matrix.tf_version }}
 
-      - name: run validation for ${{ matrix.path }}
+      - name: run ${{ inputs.action }} for ${{ matrix.path }}
+        env:
+          ARM_CLIENT_ID: ${{ secrets.client_id }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
+          ARM_TENANT_ID: ${{ secrets.tenant }}
+          ARM_USE_OIDC: true
+          ACTION: ${{ inputs.action }}
         run: |
           cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
-          make validate
+          make "$ACTION"
