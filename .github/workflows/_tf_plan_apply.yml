@@ -73,7 +73,7 @@ jobs:
           ACTION: ${{ inputs.action }}
         run: |
           cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
-          make "$ACTION"
+          make plan
 
       - name: run apply for ${{ matrix.path }}
         if: inputs.do_apply
@@ -85,4 +85,15 @@ jobs:
           ACTION: ${{ inputs.action }}
         run: |
           cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
-          make "$ACTION"
+          make apply
+      - name: run destroy on ${{ matrix.path }}
+        if: inputs.do_apply
+        env:
+          ARM_CLIENT_ID: ${{ secrets.client_id }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
+          ARM_TENANT_ID: ${{ secrets.tenant }}
+          ARM_USE_OIDC: true
+          ACTION: ${{ inputs.action }}
+        run: |
+          cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
+          make destroy
