@@ -18,6 +18,10 @@ on:
         description: Maximum parallel jobs in matrix strategy
         type: number
         default: 10
+      tf_version:
+        description: A space delimited list of TF versions used to run the code with
+        type: string
+        default: latest
     secrets:
       client_id:
         required: true
@@ -89,7 +93,7 @@ jobs:
     if: ${{ needs.tf_prereqs.outputs.validate_paths != '' }}
     uses: ./.github/workflows/_tf_validate.yml
     with:
-      tf_version: 0.15 1.0 1.1 1.2 1.3
+      tf_version: ${{ inputs.tf_version }}
       paths: ${{ needs.tf_prereqs.outputs.validate_paths }}
 
 
@@ -104,7 +108,7 @@ jobs:
       contents: read
       id-token: write
     with:
-      tf_version: 0.15 1.0 1.1 1.2 1.3
+      tf_version: ${{ inputs.tf_version }}
       paths: ${{ needs.tf_prereqs.outputs.plan_paths }}
       do_apply: ${{ inputs.do_apply }}
       indepotency: ${{ inputs.indepotency }}
