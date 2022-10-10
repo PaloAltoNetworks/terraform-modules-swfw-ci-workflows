@@ -114,7 +114,7 @@ jobs:
           make indepotency
 
       - name: run destroy on ${{ matrix.path }}
-        if: inputs.do_apply
+        if: inputs.do_apply && always()
         env:
           ARM_CLIENT_ID: ${{ secrets.client_id }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
