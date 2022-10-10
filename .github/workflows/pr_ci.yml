@@ -80,9 +80,11 @@ jobs:
       paths: ${{ needs.tf_prereqs.outputs.validate_paths }}
 
 
-  plan:
+  plan_apply:
     name: run plan changed examples and dependencies
-    needs: [tf_prereqs]
+    needs: 
+      - tf_prereqs
+      - validate
     if: ${{ needs.tf_prereqs.outputs.plan_paths != '' }}
     uses: ./.github/workflows/_tf_plan_apply.yml
     permissions:
@@ -103,7 +105,7 @@ jobs:
       - validate
       - pre-commit
       - checkov
-      - plan
+      - plan_apply
     if: always()
     permissions:
       actions: read

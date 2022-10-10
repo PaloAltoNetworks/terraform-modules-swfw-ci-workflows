@@ -22,6 +22,14 @@ on:
         description: When set to true runs also apply
         type: boolean
         default: false
+      indepotency:
+        description: When set to true runs plan to on already applied configuration
+        type: boolean
+        default: true
+      max_parallel:
+        description: Maximum parallel jobs in matrix strategy
+        type: number
+        default: 10
     secrets:
       client_id:
         required: true
@@ -52,6 +60,7 @@ jobs:
       id-token: write
     runs-on: ubuntu-latest
     strategy:
+      max-parallel: ${{ inputs.max_parallel }}
       matrix:
         tf_version: ${{ fromJson(needs.prerequisites.outputs.tf_versions) }}
         path: ${{ fromJson(needs.prerequisites.outputs.paths) }}
@@ -64,16 +73,21 @@ jobs:
         with:
           terraform_version: ${{ matrix.tf_version }}
 
+      - name: set UUID value
+        id: uuid
+        run: echo "::set-output name=uuid::$(uuidgen | tr '[:upper:]' '[:lower:]')"
+
       - name: run plan for ${{ matrix.path }}
+        id: plan
         env:
           ARM_CLIENT_ID: ${{ secrets.client_id }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
           ARM_TENANT_ID: ${{ secrets.tenant }}
           ARM_USE_OIDC: true
-          ACTION: ${{ inputs.action }}
+          UUID: ${{ steps.uuid.outputs.uuid }}
         run: |
           cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
-          make plan
+          make plan_file
 
       - name: run apply for ${{ matrix.path }}
         if: inputs.do_apply
@@ -82,10 +96,23 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
           ARM_TENANT_ID: ${{ secrets.tenant }}
           ARM_USE_OIDC: true
-          ACTION: ${{ inputs.action }}
+          UUID: ${{ steps.uuid.outputs.uuid }}
         run: |
           cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
-          make apply
+          make apply_file
+
+      - name: test indepotency for ${{ matrix.path }}
+        if: inputs.do_apply && inputs.indepotency
+        env:
+          ARM_CLIENT_ID: ${{ secrets.client_id }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
+          ARM_TENANT_ID: ${{ secrets.tenant }}
+          ARM_USE_OIDC: true
+          UUID: ${{ steps.uuid.outputs.uuid }}
+        run: |
+          cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
+          make indepotency
+
       - name: run destroy on ${{ matrix.path }}
         if: inputs.do_apply
         env:
@@ -93,7 +120,7 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
           ARM_TENANT_ID: ${{ secrets.tenant }}
           ARM_USE_OIDC: true
-          ACTION: ${{ inputs.action }}
+          UUID: ${{ steps.uuid.outputs.uuid }}
         run: |
           cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
           make destroy
