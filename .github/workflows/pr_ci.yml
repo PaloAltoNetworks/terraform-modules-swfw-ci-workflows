@@ -27,7 +27,7 @@ on:
         required: true
 
 jobs:
-  pre-commit:
+  pre_commit:
     name: Pre-Commit
     uses: ./.github/workflows/_pre_commit.yml
 
@@ -119,7 +119,7 @@ jobs:
     name: junction point for branch protection
     needs:
       - validate
-      - pre-commit
+      - pre_commit
       - checkov
       - plan_apply
     if: always()

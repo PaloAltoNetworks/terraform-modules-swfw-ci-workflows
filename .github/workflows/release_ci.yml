@@ -58,7 +58,7 @@ jobs:
           echo last_release_version - ${{ steps.rc.outputs.last_release_version }}
 
 
-  pre-commit:
+  pre_commit:
     name: Pre-Commit
     uses: ./.github/workflows/_pre_commit.yml
     needs: [release-prereqs]
@@ -100,7 +100,7 @@ jobs:
 
 
   plan_apply:
-    name: run plan on examples
+    name: run plan and/or apply on examples
     needs: 
       - tf_prereqs
       - validate
@@ -126,7 +126,7 @@ jobs:
     needs: 
       - validate
       - checkov
-      - pre-commit
+      - pre_commit
       - plan_apply
     runs-on: ubuntu-latest
     permissions:
