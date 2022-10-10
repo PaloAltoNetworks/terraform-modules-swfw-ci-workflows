@@ -5,6 +5,19 @@ permissions:
 
 on:
   workflow_call:
+    inputs:
+      do_apply:
+        description: When set to true runs also apply
+        type: boolean
+        default: false
+      indepotency:
+        description: When set to true runs plan to on already applied configuration
+        type: boolean
+        default: true
+      max_parallel:
+        description: Maximum parallel jobs in matrix strategy
+        type: number
+        default: 10
     secrets:
       client_id:
         required: true
@@ -99,6 +112,9 @@ jobs:
     with:
       tf_version: 0.15 1.0 1.1 1.2 1.3
       paths: ${{ needs.tf_prereqs.outputs.paths }}
+      do_apply: ${{ inputs.do_apply }}
+      indepotency: ${{ inputs.indepotency }}
+      max_parallel: ${{ inputs.max_parallel }}
     secrets:
       client_id: ${{ secrets.client_id }}
       subscirption: ${{ secrets.subscirption }}
