@@ -82,5 +82,5 @@ jobs:
         run: echo AWS placeholder
 
       - name: run plan/apply on GCP
-        if: inputs.cloud == gcp'
+        if: inputs.cloud == 'gcp'
         run: echo GCP placeholder
