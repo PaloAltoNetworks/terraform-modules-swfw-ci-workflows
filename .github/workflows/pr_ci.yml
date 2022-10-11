@@ -55,7 +55,7 @@ jobs:
 
       - name: get diff with base branch
         id: diff
-        uses: tj-actions/changed-files@v31
+        uses: tj-actions/changed-files@v32
         with:
           separator: "\n"
           files: |
