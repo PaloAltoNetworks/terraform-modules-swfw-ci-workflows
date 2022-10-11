@@ -5,6 +5,30 @@ permissions:
 
 on:
   workflow_call:
+    inputs:
+      do_apply:
+        description: When set to true runs also apply
+        type: boolean
+        default: false
+      indepotency:
+        description: When set to true runs plan to on already applied configuration
+        type: boolean
+        default: true
+      max_parallel:
+        description: Maximum parallel jobs in matrix strategy
+        type: number
+        default: 10
+      tf_version:
+        description: A space delimited list of TF versions used to run the code with
+        type: string
+        default: latest
+    secrets:
+      client_id:
+        required: true
+      subscirption:
+        required: true
+      tenant:
+        required: true
 
 jobs:
   release-prereqs:
@@ -38,7 +62,7 @@ jobs:
           echo last_release_version - ${{ steps.rc.outputs.last_release_version }}
 
 
-  pre-commit:
+  pre_commit:
     name: Pre-Commit
     uses: ./.github/workflows/_pre_commit.yml
     needs: [release-prereqs]
@@ -52,13 +76,14 @@ jobs:
     if: needs.release-prereqs.outputs.rc  == 'true'
 
 
-  validate_prereqs:
+  tf_prereqs:
     name: validate prerequisites
     needs: [release-prereqs]
     if: needs.release-prereqs.outputs.rc  == 'true'
     runs-on: ubuntu-latest
     outputs:
-      paths: ${{ steps.paths.outputs.paths }}
+      modules: ${{ steps.paths.outputs.modules }}
+      examples: ${{ steps.paths.outputs.examples }}
     steps:
       - name: checkout code
         uses: actions/checkout@v3
@@ -66,60 +91,40 @@ jobs:
         id: paths
         shell: bash
         run: |
-          echo "::set-output name=paths::$(echo $(ls -d1 examples/* modules/*) | tr ' ' ',')"
+          echo "::set-output name=modules::$(echo $(ls -d1 examples/* modules/*) | tr ' ' ',')"
+          echo "::set-output name=examples::$(echo $(ls -d1 examples/*) | tr ' ' ',')"
 
 
   validate:
     name: validate terraform code
-    needs: [validate_prereqs]
-    if: ${{ needs.validate_prereqs.outputs.paths != '' }}
+    needs: [tf_prereqs]
+    if: ${{ needs.tf_prereqs.outputs.modules != '' }}
     uses: ./.github/workflows/_tf_validate.yml
     with:
-      tf_version: 0.15 1.0 1.1 1.2 1.3
-      paths: ${{ needs.validate_prereqs.outputs.paths }}
+      tf_version: ${{ inputs.tf_version }}
+      paths: ${{ needs.tf_prereqs.outputs.modules }}
 
 
-  # plan_prereqs:
-  #   name: plan prerequisites
-  #   needs: [validate]
-  #   runs-on: ubuntu-latest
-  #   outputs:
-  #     paths: ${{ steps.paths.outputs.paths }}
-  #   steps:
-  #     - name: checkout code
-  #       uses: actions/checkout@v3
-  #     - name: set outputs
-  #       id: paths
-  #       shell: bash
-  #       run: |
-  #         echo "::set-output name=paths::$(echo -n $(ls -d1 examples/*) | jq -R -s -c 'split(" ")')"
-
-
-  # plan:
-  #   name: 'plan: ${{ matrix.path }}'
-  #   needs: [plan_prereqs]
-  #   if: ${{ needs.plan_prereqs.outputs.paths != '' }}
-  #   strategy:
-  #     matrix:
-  #       path: ${{ fromJson(needs.plan_prereqs.outputs.paths) }}
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: read
-  #     id-token: write
-  #   steps:
-  #     - name: checkout code
-  #       uses: actions/checkout@v3
-
-  #     - name: run plan
-  #       uses: ./.github/actions/tf_plan
-  #       env:
-  #         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-  #         ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  #         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-  #         ARM_USE_OIDC: true
-  #       with:
-  #         path: ${{ matrix.path }}
-  #         tf_version: '1.2'
+  plan_apply:
+    name: run plan and/or apply on examples
+    needs: 
+      - tf_prereqs
+      - validate
+    if: ${{ needs.tf_prereqs.outputs.examples != '' }}
+    uses: ./.github/workflows/_tf_plan_apply.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      tf_version: ${{ inputs.tf_version }}
+      paths: ${{ needs.tf_prereqs.outputs.examples }}
+      do_apply: ${{ inputs.do_apply }}
+      indepotency: ${{ inputs.indepotency }}
+      max_parallel: ${{ inputs.max_parallel }}
+    secrets:
+      client_id: ${{ secrets.client_id }}
+      subscirption: ${{ secrets.subscirption }}
+      tenant: ${{ secrets.tenant }}
 
 
   release:
@@ -127,8 +132,8 @@ jobs:
     needs: 
       - validate
       - checkov
-      - pre-commit
-      # - plan
+      - pre_commit
+      - plan_apply
     runs-on: ubuntu-latest
     permissions:
       contents: write
