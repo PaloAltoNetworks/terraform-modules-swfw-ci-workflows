@@ -30,12 +30,9 @@ on:
         description: Maximum parallel jobs in matrix strategy
         type: number
         default: 10
-    secrets:
-      client_id:
-        required: true
-      subscirption:
-        required: true
-      tenant:
+      cloud:
+        description: "Decide against which public cloud the code will be run. Possible values: azure, aws, gcp"
+        type: string
         required: true
 
 jobs:
@@ -68,66 +65,22 @@ jobs:
       - name: checkout code
         uses: actions/checkout@v3
 
-      - name: setup Terraform
-        uses: hashicorp/setup-terraform@v2
+      - name: run plan/apply on Azure
+        if: inputs.cloud == 'azure'
+        uses: ./.github/actions/plan_apply
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         with:
-          terraform_version: ${{ matrix.tf_version }}
+          tf_version: ${{ matrix.tf_version }}
+          path: ${{ matrix.path }}
+          do_apply: true
 
-      - name: set UUID value
-        id: uuid
-        run: echo "::set-output name=uuid::$(uuidgen | tr '[:upper:]' '[:lower:]')"
+      - name: run plan/apply on AWS
+        if: inputs.cloud == 'aws'
+        run: echo AWS placeholder
 
-      - name: login to Azure
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.client_id }}
-          tenant-id: ${{ secrets.tenant }}
-          subscription-id: ${{ secrets.subscirption }}
-
-      - name: run plan for ${{ matrix.path }}
-        id: plan
-        env:
-          ARM_CLIENT_ID: ${{ secrets.client_id }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
-          ARM_TENANT_ID: ${{ secrets.tenant }}
-          ARM_USE_OIDC: true
-          UUID: ${{ steps.uuid.outputs.uuid }}
-        run: |
-          cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
-          make plan_file
-
-      - name: run apply for ${{ matrix.path }}
-        if: inputs.do_apply
-        env:
-          ARM_CLIENT_ID: ${{ secrets.client_id }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
-          ARM_TENANT_ID: ${{ secrets.tenant }}
-          ARM_USE_OIDC: true
-          UUID: ${{ steps.uuid.outputs.uuid }}
-        run: |
-          cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
-          make apply_file
-
-      - name: test indepotency for ${{ matrix.path }}
-        if: inputs.do_apply && inputs.indepotency
-        env:
-          ARM_CLIENT_ID: ${{ secrets.client_id }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
-          ARM_TENANT_ID: ${{ secrets.tenant }}
-          ARM_USE_OIDC: true
-          UUID: ${{ steps.uuid.outputs.uuid }}
-        run: |
-          cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
-          make indepotency
-
-      - name: run destroy on ${{ matrix.path }}
-        if: inputs.do_apply && always()
-        env:
-          ARM_CLIENT_ID: ${{ secrets.client_id }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
-          ARM_TENANT_ID: ${{ secrets.tenant }}
-          ARM_USE_OIDC: true
-          UUID: ${{ steps.uuid.outputs.uuid }}
-        run: |
-          cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
-          make destroy
+      - name: run plan/apply on GCP
+        if: inputs.cloud == 'gcp'
+        run: echo GCP placeholder
