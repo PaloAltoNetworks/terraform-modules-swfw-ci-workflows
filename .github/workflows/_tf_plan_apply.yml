@@ -30,13 +30,13 @@ on:
         description: Maximum parallel jobs in matrix strategy
         type: number
         default: 10
-    secrets:
-      client_id:
-        required: true
-      subscirption:
-        required: true
-      tenant:
-        required: true
+    # secrets:
+    #   client_id:
+    #     required: true
+    #   subscirption:
+    #     required: true
+    #   tenant:
+    #     required: true
 
 jobs:
   prerequisites:
@@ -68,66 +68,8 @@ jobs:
       - name: checkout code
         uses: actions/checkout@v3
 
-      - name: setup Terraform
-        uses: hashicorp/setup-terraform@v2
+      - name: run plan/apply
+        uses: ./.github/actions/plan_apply
         with:
-          terraform_version: ${{ matrix.tf_version }}
-
-      - name: set UUID value
-        id: uuid
-        run: echo "::set-output name=uuid::$(uuidgen | tr '[:upper:]' '[:lower:]')"
-
-      - name: login to Azure
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.client_id }}
-          tenant-id: ${{ secrets.tenant }}
-          subscription-id: ${{ secrets.subscirption }}
-
-      - name: run plan for ${{ matrix.path }}
-        id: plan
-        env:
-          ARM_CLIENT_ID: ${{ secrets.client_id }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
-          ARM_TENANT_ID: ${{ secrets.tenant }}
-          ARM_USE_OIDC: true
-          UUID: ${{ steps.uuid.outputs.uuid }}
-        run: |
-          cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
-          make plan_file
-
-      - name: run apply for ${{ matrix.path }}
-        if: inputs.do_apply
-        env:
-          ARM_CLIENT_ID: ${{ secrets.client_id }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
-          ARM_TENANT_ID: ${{ secrets.tenant }}
-          ARM_USE_OIDC: true
-          UUID: ${{ steps.uuid.outputs.uuid }}
-        run: |
-          cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
-          make apply_file
-
-      - name: test indepotency for ${{ matrix.path }}
-        if: inputs.do_apply && inputs.indepotency
-        env:
-          ARM_CLIENT_ID: ${{ secrets.client_id }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
-          ARM_TENANT_ID: ${{ secrets.tenant }}
-          ARM_USE_OIDC: true
-          UUID: ${{ steps.uuid.outputs.uuid }}
-        run: |
-          cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
-          make indepotency
-
-      - name: run destroy on ${{ matrix.path }}
-        if: inputs.do_apply && always()
-        env:
-          ARM_CLIENT_ID: ${{ secrets.client_id }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
-          ARM_TENANT_ID: ${{ secrets.tenant }}
-          ARM_USE_OIDC: true
-          UUID: ${{ steps.uuid.outputs.uuid }}
-        run: |
-          cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
-          make destroy
+          tf_version: ${{ matrix.tf_version }}
+          path: ${{ matrix.path }}

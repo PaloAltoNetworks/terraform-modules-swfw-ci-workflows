@@ -22,13 +22,13 @@ on:
         description: A space delimited list of TF versions used to run the code with
         type: string
         default: latest
-    secrets:
-      client_id:
-        required: true
-      subscirption:
-        required: true
-      tenant:
-        required: true
+    # secrets:
+    #   client_id:
+    #     required: true
+    #   subscirption:
+    #     required: true
+    #   tenant:
+    #     required: true
 
 jobs:
   pre_commit:
@@ -113,10 +113,10 @@ jobs:
       do_apply: ${{ inputs.do_apply }}
       indepotency: ${{ inputs.indepotency }}
       max_parallel: ${{ inputs.max_parallel }}
-    secrets:
-      client_id: ${{ secrets.client_id }}
-      subscirption: ${{ secrets.subscirption }}
-      tenant: ${{ secrets.tenant }}
+    secrets: inherit
+      # client_id: ${{ secrets.client_id }}
+      # subscirption: ${{ secrets.subscirption }}
+      # tenant: ${{ secrets.tenant }}
 
 
   branch_protection_junction:
