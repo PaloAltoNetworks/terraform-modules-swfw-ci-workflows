@@ -30,13 +30,10 @@ on:
         description: Maximum parallel jobs in matrix strategy
         type: number
         default: 10
-    # secrets:
-    #   client_id:
-    #     required: true
-    #   subscirption:
-    #     required: true
-    #   tenant:
-    #     required: true
+      cloud:
+        description: "Decide against which public cloud the code will be run. Possible values: azure, aws, gcp"
+        type: string
+        required: true
 
 jobs:
   prerequisites:
@@ -68,7 +65,8 @@ jobs:
       - name: checkout code
         uses: actions/checkout@v3
 
-      - name: run plan/apply
+      - name: run plan/apply on Azure
+        if: inputs.cloud == 'azure'
         uses: ./.github/actions/plan_apply
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -77,3 +75,12 @@ jobs:
         with:
           tf_version: ${{ matrix.tf_version }}
           path: ${{ matrix.path }}
+          do_apply: true
+
+      - name: run plan/apply on AWS
+        if: inputs.cloud == 'aws'
+        run: echo AWS placeholder
+
+      - name: run plan/apply on GCP
+        if: inputs.cloud == gcp'
+        run: echo GCP placeholder
