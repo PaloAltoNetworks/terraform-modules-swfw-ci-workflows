@@ -77,13 +77,20 @@ jobs:
         id: uuid
         run: echo "::set-output name=uuid::$(uuidgen | tr '[:upper:]' '[:lower:]')"
 
+      - name: login to Azure
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.client_id }}
+          tenant-id: ${{ secrets.tenant }}
+          subscription-id: ${{ secrets.subscirption }}
+
       - name: run plan for ${{ matrix.path }}
         id: plan
         env:
-          ARM_CLIENT_ID: ${{ secrets.client_id }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
-          ARM_TENANT_ID: ${{ secrets.tenant }}
-          ARM_USE_OIDC: true
+          # ARM_CLIENT_ID: ${{ secrets.client_id }}
+          # ARM_SUBSCRIPTION_ID: ${{ secrets.subscirption }}
+          # ARM_TENANT_ID: ${{ secrets.tenant }}
+          # ARM_USE_OIDC: true
           UUID: ${{ steps.uuid.outputs.uuid }}
         run: |
           cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
