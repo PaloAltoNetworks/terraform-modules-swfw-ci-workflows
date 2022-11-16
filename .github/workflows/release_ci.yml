@@ -102,12 +102,33 @@ jobs:
       paths: ${{ needs.tf_prereqs.outputs.modules }}
 
 
+  plan_apply:
+    name: run plan and/or apply on examples
+    needs: 
+      - tf_prereqs
+      - validate
+    if: ${{ needs.tf_prereqs.outputs.examples != '' }}
+    uses: ./.github/workflows/_tf_plan_apply.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      cloud: ${{ inputs.cloud }}
+      tf_version: ${{ inputs.tf_version }}
+      paths: ${{ needs.tf_prereqs.outputs.examples }}
+      do_apply: ${{ inputs.do_apply }}
+      indepotency: ${{ inputs.indepotency }}
+      max_parallel: ${{ inputs.max_parallel }}
+    secrets: inherit
+
+
   release:
     name: release sem version
     needs: 
       - validate
       - checkov
       - pre_commit
+      - plan_apply
     runs-on: ubuntu-latest
     permissions:
       contents: write
