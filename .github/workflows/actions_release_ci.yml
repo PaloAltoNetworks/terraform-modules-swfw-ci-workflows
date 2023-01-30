@@ -10,6 +10,12 @@ on:
     branches: [main]
 
 jobs:
+  pre_commit:
+    name: Pre-Commit
+    uses: ./.github/workflows/_pre_commit.yml
+    with:
+      pre-commit-hooks: checkov
+
   release:
     name: Semantic release
     runs-on: ubuntu-latest
