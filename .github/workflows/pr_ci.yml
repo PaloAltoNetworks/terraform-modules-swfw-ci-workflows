@@ -94,7 +94,6 @@ jobs:
     needs:
       - validate
       - pre_commit
-      - checkov
     if: always()
     permissions:
       actions: read
