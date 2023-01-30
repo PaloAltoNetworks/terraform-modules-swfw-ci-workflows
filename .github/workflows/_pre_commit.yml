@@ -9,6 +9,11 @@ defaults:
 
 on:
   workflow_call:
+    inputs:
+      pre-commit-hooks:
+        description: Pre-commit hook list
+        type: string
+        required: true
 
 env:
   REQUIREMENTS: >
@@ -32,11 +37,24 @@ env:
     zipp==3.4.1
 
 jobs:
+
+  prerequisites:
+    name: prep data for matrix strategy
+    runs-on: ubuntu-latest
+    outputs:
+      pre-commit-hooks: ${{ steps.preqs.outputs.pre-commit-hooks }}
+    steps:
+      - name: set outputs
+        id: preqs
+        run: |
+          echo "::set-output name=pre-commit-hooks::$(echo "${{ inputs.pre-commit-hooks }} " | jq -R -s -c 'split(" ")[:-1]')"
+
   pre_commit_framework:
+    needs: [prerequisites]
     name: Pre-Commit
     strategy:
       matrix:
-        pre_commit_hook: [terraform_fmt, terraform_docs, terraform_tflint, checkov ]
+        pre_commit_hook: ${{ fromJson(needs.prerequisites.outputs.pre-commit-hooks) }}
     runs-on: ubuntu-latest
     steps:
       - name: checkout code

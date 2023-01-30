@@ -26,12 +26,18 @@ on:
         description: "Decide against which public cloud the code will be run. Possible values: azure, aws, gcp"
         type: string
         required: true
+      pre-commit-hooks:
+        description: Pre-commit hook list
+        type: string
+        required: true
+        default: terraform_fmt terraform_docs terraform_tflint checkov
 
 jobs:
   pre_commit:
     name: Pre-Commit
     uses: ./.github/workflows/_pre_commit.yml
-
+    with:
+      pre-commit_hooks: ${{ inputs.pre-commit-hooks }}
 
   tf_prereqs:
     name: terraform modules discovery
