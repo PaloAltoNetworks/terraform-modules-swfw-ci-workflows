@@ -37,7 +37,7 @@ jobs:
     name: Pre-Commit
     uses: ./.github/workflows/_pre_commit.yml
     with:
-      pre-commit_hooks: ${{ inputs.pre-commit-hooks }}
+      pre-commit-hooks: ${{ inputs.pre-commit-hooks }}
 
   tf_prereqs:
     name: terraform modules discovery
