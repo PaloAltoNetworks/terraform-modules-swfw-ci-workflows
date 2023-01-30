@@ -51,6 +51,7 @@ jobs:
         run: mkdir tmp
 
       - name: install TF Docs
+        if: ${{ matrix.pre_commit_hook == 'terraform_docs' }}
         working-directory: tmp
         run: |
           curl -sL https://github.com/terraform-docs/terraform-docs/releases/download/v0.16.0/terraform-docs-v0.16.0-linux-amd64.tar.gz > terraform-docs.tar.gz 
@@ -58,15 +59,16 @@ jobs:
           mv terraform-docs /usr/local/bin/
           terraform-docs --version
 
-      - name: install TF Sec
-        working-directory: tmp
-        run: |
-          curl -sL https://github.com/tfsec/tfsec/releases/download/v0.34.0/tfsec-linux-amd64 > tfsec
-          chmod +x tfsec
-          mv tfsec /usr/local/bin/
-          tfsec --version
+#      - name: install TF Sec
+#        working-directory: tmp
+#        run: |
+#          curl -sL https://github.com/tfsec/tfsec/releases/download/v0.34.0/tfsec-linux-amd64 > tfsec
+#          chmod +x tfsec
+#          mv tfsec /usr/local/bin/
+#          tfsec --version
 
       - name: install TF Lint
+        if: ${{ matrix.pre_commit_hook == 'terraform_tflint' }}
         working-directory: tmp
         run: |
           curl -sL https://github.com/terraform-linters/tflint/releases/download/v0.29.0/tflint_linux_amd64.zip > tflint.zip
