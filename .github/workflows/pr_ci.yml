@@ -33,11 +33,6 @@ jobs:
     uses: ./.github/workflows/_pre_commit.yml
 
 
-  checkov:
-    name: Checkov
-    uses: ./.github/workflows/_checkov.yml
-
-
   tf_prereqs:
     name: terraform modules discovery
     runs-on: ubuntu-latest

@@ -7,7 +7,7 @@ defaults:
   run:
     shell: bash
 
-on: 
+on:
   workflow_call:
 
 env:
@@ -34,6 +34,9 @@ env:
 jobs:
   pre_commit_framework:
     name: Pre-Commit
+    strategy:
+      matrix:
+        pre_commit_hook: [terraform_fmt, terraform_docs, terraform_tflint, checkov ]
     runs-on: ubuntu-latest
     steps:
       - name: checkout code
@@ -74,9 +77,7 @@ jobs:
       - name: install python requirements
         run: python3 -m pip install $REQUIREMENTS
 
-      - name: run pre-commit
+      - name: run pre-commit for ${{ matrix.pre_commit_hook }}
         run: |
           rm -rf tmp
-          pre-commit run --all-files terraform_fmt
-          pre-commit run --all-files terraform_tflint
-          pre-commit run --all-files terraform_docs
+          pre-commit run --all-files ${{ matrix.pre_commit_hook }}
