@@ -14,7 +14,10 @@ on:
         description: "Pre-commit hook list . Possible values are a combination of any of the following: terraform_fmt terraform_docs terraform_tflint checkov "
         type: string
         required: true
-
+      pre-commit-files:
+        description: "Files for pre-commit to scan - passed dynamically via PR CI variable. "
+        type: string
+        required: true
 env:
   REQUIREMENTS: >
     appdirs==1.4.4
@@ -43,11 +46,13 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       pre-commit-hooks: ${{ steps.preqs.outputs.pre-commit-hooks }}
+      pre-commit-files: ${{ steps.preqs.outputs.pre-commit-files}}
     steps:
       - name: set outputs
         id: preqs
         run: |
           echo "::set-output name=pre-commit-hooks::$(echo "${{ inputs.pre-commit-hooks }} " | jq -R -s -c 'split(" ")[:-1]')"
+          echo "::set-output name=pre-commit-files::$(echo "${{ inputs.pre-commit-files }}" | tr '\n' ' ')"
 
   pre_commit_framework:
     needs: [prerequisites]
@@ -77,14 +82,6 @@ jobs:
           mv terraform-docs /usr/local/bin/
           terraform-docs --version
 
-#      - name: install TF Sec
-#        working-directory: tmp
-#        run: |
-#          curl -sL https://github.com/tfsec/tfsec/releases/download/v0.34.0/tfsec-linux-amd64 > tfsec
-#          chmod +x tfsec
-#          mv tfsec /usr/local/bin/
-#          tfsec --version
-
       - name: install TF Lint
         if: ${{ matrix.pre_commit_hook == 'terraform_tflint' }}
         working-directory: tmp
@@ -100,4 +97,4 @@ jobs:
       - name: run pre-commit for ${{ matrix.pre_commit_hook }}
         run: |
           rm -rf tmp
-          pre-commit run --all-files ${{ matrix.pre_commit_hook }}
+          pre-commit run ${{ matrix.pre_commit_hook }} --files ${{ needs.prerequisites.outputs.pre-commit-files }}

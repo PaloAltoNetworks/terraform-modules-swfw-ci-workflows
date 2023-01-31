@@ -29,15 +29,9 @@ on:
       pre-commit-hooks:
         description: "Pre-commit hook list . Possible values are a combination of any of the following: terraform_fmt terraform_docs terraform_tflint checkov "
         type: string
-        required: true
         default: terraform_fmt terraform_docs terraform_tflint checkov
 
 jobs:
-  pre_commit:
-    name: Pre-Commit
-    uses: ./.github/workflows/_pre_commit.yml
-    with:
-      pre-commit-hooks: ${{ inputs.pre-commit-hooks }}
 
   tf_prereqs:
     name: terraform modules discovery
@@ -45,6 +39,7 @@ jobs:
     outputs:
       validate_paths: ${{ steps.format.outputs.dir_diff }}
       plan_paths: ${{ steps.deps.outputs.examples }}
+      changed_files: ${{ steps.format.outputs.files_diff }}
     steps:
       - name: checkout code
         uses: actions/checkout@v3
@@ -55,7 +50,7 @@ jobs:
         id: diff
         uses: tj-actions/changed-files@v32
         with:
-          separator: "\n"
+          separator: "@"
           files: |
             modules/**/*.tf
             examples/**/*.tf
@@ -64,8 +59,10 @@ jobs:
         id: format
         env:
           DIFFS: ${{ steps.diff.outputs.all_changed_files }}
+        shell: bash
         run: |
-          echo "::set-output name=dir_diff::$(echo -n "$DIFFS" | sed -E "s/^(modules|examples)\/(.+)\/.*$/\1\/\2/"  | tr '\n' ',')"
+          echo "::set-output name=dir_diff::$(echo -n "$DIFFS" | tr -d '\n' | tr '@' '\n' | sed -E "s/^(modules|examples)\/(.+)\/.*$/\1\/\2/" | sort -u | tr '\n' ',' | rev | cut -c2- | rev)"
+          echo "::set-output name=files_diff::$(echo "$DIFFS" | tr '@' ' ')"
 
       - name: discover module->example dependencies
         id: deps
@@ -83,6 +80,14 @@ jobs:
               echo "::set-output name=examples::$(echo -n $EXAMPLES_COMBINED | tr ' ' ',')"
             fi
           fi
+
+  pre_commit:
+    name: Pre-Commit
+    needs: [tf_prereqs]
+    uses: ./.github/workflows/_pre_commit.yml
+    with:
+      pre-commit-hooks: ${{ inputs.pre-commit-hooks }}
+      pre-commit-files: ${{ needs.tf_prereqs.outputs.changed_files }}
 
 
   validate:
