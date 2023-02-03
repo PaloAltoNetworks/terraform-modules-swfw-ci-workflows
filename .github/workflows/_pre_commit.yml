@@ -51,8 +51,8 @@ jobs:
       - name: set outputs
         id: preqs
         run: |
-          echo "::set-output name=pre-commit-hooks::$(echo "${{ inputs.pre-commit-hooks }} " | jq -R -s -c 'split(" ")[:-1]')"
-          echo "::set-output name=pre-commit-files::$(echo "${{ inputs.pre-commit-files }}" | tr '\n' ' ')"
+          echo "pre-commit-hooks=$(echo "${{ inputs.pre-commit-hooks }} " | jq -R -s -c 'split(" ")[:-1]')" >> $GITHUB_OUTPUT
+          echo "pre-commit-files=$(echo "${{ inputs.pre-commit-files }}" | tr '\n' ' ')" >> $GITHUB_OUTPUT
 
   pre_commit_framework:
     needs: [prerequisites]

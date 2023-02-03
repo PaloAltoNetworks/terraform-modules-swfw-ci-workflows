@@ -61,8 +61,8 @@ jobs:
           DIFFS: ${{ steps.diff.outputs.all_changed_files }}
         shell: bash
         run: |
-          echo "::set-output name=dir_diff::$(echo -n "$DIFFS" | tr -d '\n' | tr '@' '\n' | sed -E "s/^(modules|examples)\/(.+)\/.*$/\1\/\2/" | sort -u | tr '\n' ',' | rev | cut -c2- | rev)"
-          echo "::set-output name=files_diff::$(echo "$DIFFS" | tr '@' ' ')"
+          echo "dir_diff=$(echo -n "$DIFFS" | tr -d '\n' | tr '@' '\n' | sed -E "s/^(modules|examples)\/(.+)\/.*$/\1\/\2/" | sort -u | tr '\n' ',' | rev | cut -c2- | rev)" >> $GITHUB_OUTPUT
+          echo "files_diff=$(echo "$DIFFS" | tr '@' ' ')" >> $GITHUB_OUTPUT
 
       - name: discover module->example dependencies
         id: deps
@@ -77,7 +77,7 @@ jobs:
 
             if [ "$(echo "$(echo $EXAMPLES_DISCOVERY | tr ' ' ','),$DIFFS" | grep examples)" ]; then
               EXAMPLES_COMBINED=$(echo "$(echo $EXAMPLES_DISCOVERY | tr ' ' ','),$DIFFS" | tr ',' '\n' | awk NF | grep examples | sort -u)
-              echo "::set-output name=examples::$(echo -n $EXAMPLES_COMBINED | tr ' ' ',')"
+              echo "examples=$(echo -n $EXAMPLES_COMBINED | tr ' ' ',')" >> $GITHUB_OUTPUT
             fi
           fi
 

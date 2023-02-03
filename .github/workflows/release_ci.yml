@@ -88,8 +88,8 @@ jobs:
         id: paths
         shell: bash
         run: |
-          echo "::set-output name=modules::$(echo $(ls -d1 examples/* modules/*) | tr ' ' ',')"
-          echo "::set-output name=examples::$(echo $(ls -d1 examples/*) | tr ' ' ',')"
+          echo "modules=$(echo $(ls -d1 examples/* modules/*) | tr ' ' ',')" >> $GITHUB_OUTPUT
+          echo "examples=$(echo $(ls -d1 examples/*) | tr ' ' ',')" >> $GITHUB_OUTPUT
 
 
   validate:

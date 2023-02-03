@@ -33,7 +33,7 @@ jobs:
         env:
           DIFFS: ${{ steps.diff.outputs.all_changed_files }}
         run: |
-          echo "::set-output name=files_diff::$(echo "$DIFFS" | tr '\n' ' ')"
+          echo "files_diff=$(echo "$DIFFS" | tr '\n' ' ')" >> $GITHUB_OUTPUT
 
   pre_commit:
     name: Pre-Commit
