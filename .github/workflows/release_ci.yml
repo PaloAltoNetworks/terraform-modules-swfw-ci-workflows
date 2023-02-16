@@ -101,7 +101,6 @@ jobs:
     name: release sem version
     needs: 
       - validate
-      - checkov
       - pre_commit
     runs-on: ubuntu-latest
     permissions:

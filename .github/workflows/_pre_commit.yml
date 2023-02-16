@@ -11,7 +11,7 @@ on:
   workflow_call:
     inputs:
       pre-commit-hooks:
-        description: "Pre-commit hook list . Possible values are a combination of any of the following: terraform_fmt terraform_docs terraform_tflint checkov "
+        description: "Pre-commit hook list . Possible values are a combination of any of the following: terraform_fmt, terraform_docs, terraform_tflint, checkov (space spearated) "
         type: string
         required: true
       pre-commit-files:
@@ -94,7 +94,26 @@ jobs:
       - name: install python requirements
         run: python3 -m pip install $REQUIREMENTS
 
-      - name: run pre-commit for ${{ matrix.pre_commit_hook }}
+      - name: run pre-commit for terraform_tflint
+        if: ${{ matrix.pre_commit_hook == 'terraform_tflint' }}
         run: |
           rm -rf tmp
           pre-commit run ${{ matrix.pre_commit_hook }} --files ${{ needs.prerequisites.outputs.pre-commit-files }}
+
+      - name: run pre-commit for terraform_docs
+        if: ${{ matrix.pre_commit_hook == 'terraform_docs' }}
+        run: |
+          rm -rf tmp
+          pre-commit run ${{ matrix.pre_commit_hook }} --files ${{ needs.prerequisites.outputs.pre-commit-files }}
+
+      - name: run pre-commit for terraform_fmt
+        if: ${{ matrix.pre_commit_hook == 'terraform_fmt' }}
+        run: |
+          rm -rf tmp
+          pre-commit run ${{ matrix.pre_commit_hook }} --files ${{ needs.prerequisites.outputs.pre-commit-files }}
+
+      - name: run pre-commit for checkov
+        if: ${{ matrix.pre_commit_hook == 'checkov' }}
+        run: |
+          rm -rf tmp
+          pre-commit run checkov -a
