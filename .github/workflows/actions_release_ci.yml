@@ -11,37 +11,12 @@ on:
 
 jobs:
 
-  prerequisites:
-    name: format data for pre_commit input
-    runs-on: ubuntu-latest
-    outputs:
-      changed_files: ${{ steps.format.outputs.files_diff }}
-    steps:
-      - name: checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: get diff with base branch
-        id: diff
-        uses: tj-actions/changed-files@v32
-        with:
-          separator: "\n"
-
-      - name: extract only changed folders
-        id: format
-        env:
-          DIFFS: ${{ steps.diff.outputs.all_changed_files }}
-        run: |
-          echo "files_diff=$(echo "$DIFFS" | tr '\n' ' ')" >> $GITHUB_OUTPUT
-
   pre_commit:
     name: Pre-Commit
-    needs: [prerequisites]
     uses: ./.github/workflows/_pre_commit.yml
     with:
       pre-commit-hooks: checkov
-      pre-commit-files: ${{ needs.prerequisites.outputs.changed_files }}
+      pre-commit-files: /
 
   release:
     name: Semantic release

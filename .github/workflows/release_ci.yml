@@ -64,14 +64,9 @@ jobs:
     uses: ./.github/workflows/_pre_commit.yml
     needs: [release-prereqs]
     if: needs.release-prereqs.outputs.rc  == 'true'
-
-
-  checkov:
-    name: Checkov
-    uses: ./.github/workflows/_checkov.yml
-    needs: [release-prereqs]
-    if: needs.release-prereqs.outputs.rc  == 'true'
-
+    with:
+      pre-commit-hooks: checkov
+      pre-commit-files: /
 
   tf_prereqs:
     name: validate prerequisites
