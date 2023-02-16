@@ -7,5 +7,4 @@ repos:
       args: [
         --compact,
         --quiet,
-        --framework, "github_actions"
       ]
