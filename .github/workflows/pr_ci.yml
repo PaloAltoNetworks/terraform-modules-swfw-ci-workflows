@@ -27,7 +27,7 @@ on:
         type: string
         required: true
       pre-commit-hooks:
-        description: "Pre-commit hook list . Possible values are a combination of any of the following: terraform_fmt terraform_docs terraform_tflint checkov "
+        description: "Pre-commit hook list. Possible values are a combination of any of the following: terraform_fmt, terraform_docs, terraform_tflint, checkov (space spearated)."
         type: string
         default: terraform_fmt terraform_docs terraform_tflint checkov
 
