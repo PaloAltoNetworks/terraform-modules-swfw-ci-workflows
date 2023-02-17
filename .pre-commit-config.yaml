@@ -4,6 +4,7 @@ repos:
     hooks:
     - id: checkov
       verbose: true
+      files: '^\.github/workflows/.*\.yml$'
       args: [
         --compact,
         --quiet,
