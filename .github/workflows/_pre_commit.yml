@@ -95,19 +95,43 @@ jobs:
       - name: install python requirements
         run: python3 -m pip install $REQUIREMENTS
 
-      - name: run pre-commit (specific files) for ${{ matrix.pre_commit_hook }}
-        if: (${{ !contains(matrix.pre_commit_hook, 'checkov') }}) && !(${{ inputs.pre-commit-files == 'all-files' }})
+      - name: run pre-commit terraform_fmt
+        if: ${{ matrix.pre_commit_hook == terraform_fmt }}
+        env:
+          INPUT_FILES: ${{ inputs.pre-commit-files }}
         run: |
           rm -rf tmp
-          pre-commit run ${{ matrix.pre_commit_hook }} --files ${{ needs.prerequisites.outputs.pre-commit-files }}
+          if $INPUT_FILES == "all-files"; then
+            pre-commit run ${{ matrix.pre_commit_hook }} -a
+          else
+            pre-commit run ${{ matrix.pre_commit_hook }} --files ${{ needs.prerequisites.outputs.pre-commit-files }}
+          fi
 
-      - name: run pre-commit (all files) for ${{ matrix.pre_commit_hook }}
-        if: (${{ !contains(matrix.pre_commit_hook, 'checkov') }}) && (${{ inputs.pre-commit-files == 'all-files' }})
+      - name: run pre-commit terraform_tflint
+        if: ${{ matrix.pre_commit_hook == terraform_tflint }}
+        env:
+          INPUT_FILES: ${{ inputs.pre-commit-files }}
         run: |
           rm -rf tmp
-          pre-commit run ${{ matrix.pre_commit_hook }} -a
+          if $INPUT_FILES == "all-files"; then
+            pre-commit run ${{ matrix.pre_commit_hook }} -a
+          else
+            pre-commit run ${{ matrix.pre_commit_hook }} --files ${{ needs.prerequisites.outputs.pre-commit-files }}
+          fi
 
-      - name: run pre-commit (all files) for checkov
+      - name: run pre-commit terraform_docs
+        if: ${{ matrix.pre_commit_hook == terraform_docs }}
+        env:
+          INPUT_FILES: ${{ inputs.pre-commit-files }}
+        run: |
+          rm -rf tmp
+          if $INPUT_FILES == "all-files"; then
+            pre-commit run ${{ matrix.pre_commit_hook }} -a
+          else
+            pre-commit run ${{ matrix.pre_commit_hook }} --files ${{ needs.prerequisites.outputs.pre-commit-files }}
+          fi
+
+      - name: run pre-commit for checkov
         if: ${{ contains(matrix.pre_commit_hook, 'checkov') }}
         run: |
           rm -rf tmp
