@@ -18,7 +18,7 @@ on:
         description: "Files for pre-commit to scan - passed dynamically via PR CI variable. "
         type: string
         default: "all-files"
-        required: true
+        required: false
 env:
   REQUIREMENTS: >
     appdirs==1.4.4
@@ -105,7 +105,7 @@ jobs:
         if: ${{ matrix.pre_commit_hook != 'checkov' }} && ${{ inputs.pre-commit-files == 'all-files' }}
         run: |
           rm -rf tmp
-          pre-commit run ${{ matrix.pre_commit_hook }} --files ${{ needs.prerequisites.outputs.pre-commit-files }}
+          pre-commit run ${{ matrix.pre_commit_hook }} -a
 
       - name: run pre-commit (all files) for checkov
         if: ${{ matrix.pre_commit_hook == 'checkov' }}
