@@ -97,7 +97,6 @@ jobs:
 
       - name: run pre-commit (specific files) for ${{ matrix.pre_commit_hook }}
         if: (${{ !contains(matrix.pre_commit_hook, 'checkov') }}) && !(${{ inputs.pre-commit-files == 'all-files' }})
-        if: 
         run: |
           rm -rf tmp
           pre-commit run ${{ matrix.pre_commit_hook }} --files ${{ needs.prerequisites.outputs.pre-commit-files }}
