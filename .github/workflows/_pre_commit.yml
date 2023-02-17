@@ -17,6 +17,7 @@ on:
       pre-commit-files:
         description: "Files for pre-commit to scan - passed dynamically via PR CI variable. "
         type: string
+        default: "all-files"
         required: true
 env:
   REQUIREMENTS: >
@@ -94,25 +95,19 @@ jobs:
       - name: install python requirements
         run: python3 -m pip install $REQUIREMENTS
 
-      - name: run pre-commit for terraform_tflint
-        if: ${{ matrix.pre_commit_hook == 'terraform_tflint' }}
+      - name: run pre-commit (specific files) for ${{ matrix.pre_commit_hook }}
+        if: ${{ matrix.pre_commit_hook != 'checkov' }} && ${{ inputs.pre-commit-files != 'all-files' }}
         run: |
           rm -rf tmp
           pre-commit run ${{ matrix.pre_commit_hook }} --files ${{ needs.prerequisites.outputs.pre-commit-files }}
 
-      - name: run pre-commit for terraform_docs
-        if: ${{ matrix.pre_commit_hook == 'terraform_docs' }}
+      - name: run pre-commit (all files) for ${{ matrix.pre_commit_hook }}
+        if: ${{ matrix.pre_commit_hook != 'checkov' }} && ${{ inputs.pre-commit-files == 'all-files' }}
         run: |
           rm -rf tmp
           pre-commit run ${{ matrix.pre_commit_hook }} --files ${{ needs.prerequisites.outputs.pre-commit-files }}
 
-      - name: run pre-commit for terraform_fmt
-        if: ${{ matrix.pre_commit_hook == 'terraform_fmt' }}
-        run: |
-          rm -rf tmp
-          pre-commit run ${{ matrix.pre_commit_hook }} --files ${{ needs.prerequisites.outputs.pre-commit-files }}
-
-      - name: run pre-commit for checkov
+      - name: run pre-commit (all files) for checkov
         if: ${{ matrix.pre_commit_hook == 'checkov' }}
         run: |
           rm -rf tmp
