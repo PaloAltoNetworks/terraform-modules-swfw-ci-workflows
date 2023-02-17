@@ -96,42 +96,46 @@ jobs:
         run: python3 -m pip install $REQUIREMENTS
 
       - name: run pre-commit terraform_fmt
+        shell: bash
         if: ${{ matrix.pre_commit_hook == 'terraform_fmt' }}
         env:
           INPUT_FILES: ${{ inputs.pre-commit-files }}
         run: |
           rm -rf tmp
-          if $INPUT_FILES == "all-files"; then
+          if grep -q "all-files" <<< "$INPUT_FILES"; then
             pre-commit run ${{ matrix.pre_commit_hook }} -a
           else
             pre-commit run ${{ matrix.pre_commit_hook }} --files ${{ needs.prerequisites.outputs.pre-commit-files }}
           fi
 
       - name: run pre-commit terraform_tflint
+        shell: bash
         if: ${{ matrix.pre_commit_hook == 'terraform_tflint' }}
         env:
           INPUT_FILES: ${{ inputs.pre-commit-files }}
         run: |
           rm -rf tmp
-          if $INPUT_FILES == "all-files"; then
+          if grep -q "all-files" <<< "$INPUT_FILES"; then
             pre-commit run ${{ matrix.pre_commit_hook }} -a
           else
             pre-commit run ${{ matrix.pre_commit_hook }} --files ${{ needs.prerequisites.outputs.pre-commit-files }}
           fi
 
       - name: run pre-commit terraform_docs
+        shell: bash
         if: ${{ matrix.pre_commit_hook == 'terraform_docs' }}
         env:
           INPUT_FILES: ${{ inputs.pre-commit-files }}
         run: |
           rm -rf tmp
-          if $INPUT_FILES == "all-files"; then
+          if grep -q "all-files" <<< "$INPUT_FILES"; then
             pre-commit run ${{ matrix.pre_commit_hook }} -a
           else
             pre-commit run ${{ matrix.pre_commit_hook }} --files ${{ needs.prerequisites.outputs.pre-commit-files }}
           fi
 
       - name: run pre-commit for checkov
+        shell: bash
         if: ${{ contains(matrix.pre_commit_hook, 'checkov') }}
         run: |
           rm -rf tmp
