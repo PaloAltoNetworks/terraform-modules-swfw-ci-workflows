@@ -96,7 +96,7 @@ jobs:
         run: python3 -m pip install $REQUIREMENTS
 
       - name: run pre-commit terraform_fmt
-        if: ${{ matrix.pre_commit_hook == terraform_fmt }}
+        if: ${{ matrix.pre_commit_hook == 'terraform_fmt' }}
         env:
           INPUT_FILES: ${{ inputs.pre-commit-files }}
         run: |
@@ -108,7 +108,7 @@ jobs:
           fi
 
       - name: run pre-commit terraform_tflint
-        if: ${{ matrix.pre_commit_hook == terraform_tflint }}
+        if: ${{ matrix.pre_commit_hook == 'terraform_tflint' }}
         env:
           INPUT_FILES: ${{ inputs.pre-commit-files }}
         run: |
@@ -120,7 +120,7 @@ jobs:
           fi
 
       - name: run pre-commit terraform_docs
-        if: ${{ matrix.pre_commit_hook == terraform_docs }}
+        if: ${{ matrix.pre_commit_hook == 'terraform_docs' }}
         env:
           INPUT_FILES: ${{ inputs.pre-commit-files }}
         run: |
