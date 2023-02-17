@@ -16,7 +16,6 @@ jobs:
     uses: ./.github/workflows/_pre_commit.yml
     with:
       pre-commit-hooks: checkov
-      pre-commit-files: /
 
   release:
     name: Semantic release
