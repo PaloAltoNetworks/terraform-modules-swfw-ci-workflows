@@ -96,13 +96,13 @@ jobs:
         run: python3 -m pip install $REQUIREMENTS
 
       - name: run pre-commit (specific files) for ${{ matrix.pre_commit_hook }}
-        if: ${{ matrix.pre_commit_hook != 'checkov' }} && ${{ inputs.pre-commit-files != 'all-files' }}
+        if: (${{ matrix.pre_commit_hook != 'checkov' }}) && !(${{ inputs.pre-commit-files == 'all-files' }})
         run: |
           rm -rf tmp
           pre-commit run ${{ matrix.pre_commit_hook }} --files ${{ needs.prerequisites.outputs.pre-commit-files }}
 
       - name: run pre-commit (all files) for ${{ matrix.pre_commit_hook }}
-        if: ${{ matrix.pre_commit_hook != 'checkov' }} && ${{ inputs.pre-commit-files == 'all-files' }}
+        if: (${{ matrix.pre_commit_hook != 'checkov' }}) && (${{ inputs.pre-commit-files == 'all-files' }})
         run: |
           rm -rf tmp
           pre-commit run ${{ matrix.pre_commit_hook }} -a
