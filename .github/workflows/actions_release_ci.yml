@@ -19,6 +19,8 @@ jobs:
 
   release:
     name: Semantic release
+    needs: 
+      - pre_commit
     runs-on: ubuntu-latest
     steps:
       - name: checkout code
