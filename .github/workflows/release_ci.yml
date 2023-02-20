@@ -64,14 +64,9 @@ jobs:
     uses: ./.github/workflows/_pre_commit.yml
     needs: [release-prereqs]
     if: needs.release-prereqs.outputs.rc  == 'true'
-
-
-  checkov:
-    name: Checkov
-    uses: ./.github/workflows/_checkov.yml
-    needs: [release-prereqs]
-    if: needs.release-prereqs.outputs.rc  == 'true'
-
+    with:
+      pre-commit-hooks: terraform_fmt terraform_docs terraform_tflint checkov
+      pre-commit-files: all-files
 
   tf_prereqs:
     name: validate prerequisites
@@ -88,8 +83,8 @@ jobs:
         id: paths
         shell: bash
         run: |
-          echo "::set-output name=modules::$(echo $(ls -d1 examples/* modules/*) | tr ' ' ',')"
-          echo "::set-output name=examples::$(echo $(ls -d1 examples/*) | tr ' ' ',')"
+          echo "modules=$(echo $(ls -d1 examples/* modules/*) | tr ' ' ',')" >> $GITHUB_OUTPUT
+          echo "examples=$(echo $(ls -d1 examples/*) | tr ' ' ',')" >> $GITHUB_OUTPUT
 
 
   validate:
@@ -106,7 +101,6 @@ jobs:
     name: release sem version
     needs: 
       - validate
-      - checkov
       - pre_commit
     runs-on: ubuntu-latest
     permissions:

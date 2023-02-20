@@ -26,17 +26,12 @@ on:
         description: "Decide against which public cloud the code will be run. Possible values: azure, aws, gcp"
         type: string
         required: true
+      pre-commit-hooks:
+        description: "Pre-commit hook list. Possible values are a combination of any of the following: terraform_fmt, terraform_docs, terraform_tflint, checkov (space spearated)."
+        type: string
+        default: terraform_fmt terraform_docs terraform_tflint checkov
 
 jobs:
-  pre_commit:
-    name: Pre-Commit
-    uses: ./.github/workflows/_pre_commit.yml
-
-
-  checkov:
-    name: Checkov
-    uses: ./.github/workflows/_checkov.yml
-
 
   tf_prereqs:
     name: terraform modules discovery
@@ -44,6 +39,7 @@ jobs:
     outputs:
       validate_paths: ${{ steps.format.outputs.dir_diff }}
       plan_paths: ${{ steps.deps.outputs.examples }}
+      changed_files: ${{ steps.format.outputs.files_diff }}
     steps:
       - name: checkout code
         uses: actions/checkout@v3
@@ -54,7 +50,7 @@ jobs:
         id: diff
         uses: tj-actions/changed-files@v32
         with:
-          separator: "\n"
+          separator: "@"
           files: |
             modules/**/*.tf
             examples/**/*.tf
@@ -63,8 +59,10 @@ jobs:
         id: format
         env:
           DIFFS: ${{ steps.diff.outputs.all_changed_files }}
+        shell: bash
         run: |
-          echo "::set-output name=dir_diff::$(echo -n "$DIFFS" | sed -E "s/^(modules|examples)\/(.+)\/.*$/\1\/\2/"  | tr '\n' ',')"
+          echo "dir_diff=$(echo -n "$DIFFS" | tr -d '\n' | tr '@' '\n' | sed -E "s/^(modules|examples)\/(.+)\/.*$/\1\/\2/" | sort -u | tr '\n' ',' | rev | cut -c2- | rev)" >> $GITHUB_OUTPUT
+          echo "files_diff=$(echo "$DIFFS" | tr '@' ' ')" >> $GITHUB_OUTPUT
 
       - name: discover module->example dependencies
         id: deps
@@ -79,9 +77,17 @@ jobs:
 
             if [ "$(echo "$(echo $EXAMPLES_DISCOVERY | tr ' ' ','),$DIFFS" | grep examples)" ]; then
               EXAMPLES_COMBINED=$(echo "$(echo $EXAMPLES_DISCOVERY | tr ' ' ','),$DIFFS" | tr ',' '\n' | awk NF | grep examples | sort -u)
-              echo "::set-output name=examples::$(echo -n $EXAMPLES_COMBINED | tr ' ' ',')"
+              echo "examples=$(echo -n $EXAMPLES_COMBINED | tr ' ' ',')" >> $GITHUB_OUTPUT
             fi
           fi
+
+  pre_commit:
+    name: Pre-Commit
+    needs: [tf_prereqs]
+    uses: ./.github/workflows/_pre_commit.yml
+    with:
+      pre-commit-hooks: ${{ inputs.pre-commit-hooks }}
+      pre-commit-files: ${{ needs.tf_prereqs.outputs.changed_files }}
 
 
   validate:
@@ -99,7 +105,6 @@ jobs:
     needs:
       - validate
       - pre_commit
-      - checkov
     if: always()
     permissions:
       actions: read
