@@ -35,7 +35,7 @@ jobs:
         
   validate:
     needs: [prerequisites]
-    name: '${{ matrix.path }}@${{ matrix.tf_version }}'
+    name: 'validate ${{ matrix.path }}@${{ matrix.tf_version }}'
     runs-on: ubuntu-latest
     strategy:
       matrix:

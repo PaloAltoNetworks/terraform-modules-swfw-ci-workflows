@@ -36,22 +36,50 @@ on:
         required: true
 
 jobs:
+  # debugger:
+  #   name: debug outputs
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: runner
+  #       # env:
+  #         # changed_files: ${{ needs.tf_prereqs.outputs.changed_files }}
+  #         # validate_paths: ${{ needs.tf_prereqs.outputs.validate_paths }}
+  #         # plan_paths: ${{ needs.tf_prereqs.outputs.plan_paths }}
+  #       # shell: bash
+  #       run: |
+  #         echo input paths: ${{ inputs.paths }}
+  #         echo tf versions: ${{ inputs.tf_version }}
+
   prerequisites:
     name: prep data for matrix strategy
     runs-on: ubuntu-latest
     outputs:
       paths: ${{ steps.preqs.outputs.paths }}
       tf_versions: ${{ steps.preqs.outputs.tf_versions }}
+    env:
+      PATHS: ${{ inputs.paths }}
+      TFVER: ${{ inputs.tf_version }}
     steps:
       - name: set outputs
         id: preqs
         run: |
-          echo "paths=$(echo -n "${{ inputs.paths }}" | jq -R -s -c 'split(",")')" >> $GITHUB_OUTPUT
-          echo "tf_versions=$(echo "${{ inputs.tf_version }} " | jq -R -s -c 'split(" ")[:-1]')" >> $GITHUB_OUTPUT
+          echo paths: $PATHS
+          echo tf versions $TFVER
+
+          echo
+          echo paths formatted as JSON
+          echo -n "$PATHS" | jq -R -s -c 'split(",")'
+
+          echo
+          echo tf versions formatted as JSON
+          echo "$TFVER " | jq -R -s -c 'split(" ")[:-1]'
+
+          echo "paths=$(echo -n "$PATHS" | jq -R -s -c 'split(",")')" >> $GITHUB_OUTPUT
+          echo "tf_versions=$(echo "$TFVER " | jq -R -s -c 'split(" ")[:-1]')" >> $GITHUB_OUTPUT
         
   terraform:
     needs: [prerequisites]
-    name: '${{ matrix.path }}@${{ matrix.tf_version }}'
+    name: ' plan/apply ${{ matrix.path }}@${{ matrix.tf_version }}'
     permissions:
       contents: read
       id-token: write
@@ -62,10 +90,16 @@ jobs:
         tf_version: ${{ fromJson(needs.prerequisites.outputs.tf_versions) }}
         path: ${{ fromJson(needs.prerequisites.outputs.paths) }}
     steps:
+      # - name: debug
+      #   run: |
+      #     echo paths ${{ matrix.path }}
+      #     echo version ${{ matrix.tf_version }}
+
+
       - name: checkout code
         uses: actions/checkout@v3
 
-      - name: run plan/apply on Azure
+      - name: run plan/apply on Azure for ${{ matrix.path }}
         if: inputs.cloud == 'azure'
         uses: ./.github/actions/plan_apply
         env:
@@ -78,10 +112,10 @@ jobs:
           do_apply: ${{ inputs.do_apply }}
           indepotency: ${{ inputs.indepotency }}
 
-      - name: run plan/apply on AWS
-        if: inputs.cloud == 'aws'
-        run: echo AWS placeholder
+  #     - name: run plan/apply on AWS
+  #       if: inputs.cloud == 'aws'
+  #       run: echo AWS placeholder
 
-      - name: run plan/apply on GCP
-        if: inputs.cloud == 'gcp'
-        run: echo GCP placeholder
+  #     - name: run plan/apply on GCP
+  #       if: inputs.cloud == 'gcp'
+  #       run: echo GCP placeholder
