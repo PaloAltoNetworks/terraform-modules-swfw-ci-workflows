@@ -71,11 +71,7 @@ flowchart
     subgraph P [Pre-Commit Sub-Workflow]
         direction TB
         p_start(Init point of a sub-workflow)-->p_prereq(Install pre-commit prerequisites)
-        p_prereq-->p_pre_commit(Run Pre-Commit)
-    end
-    subgraph C [Checkov Sub-Workflow]
-        direction TB
-        c_start(Init point of a sub-workflow)-->c_checkov(Run Checkov)
+        p_prereq-->p_pre_commit(Execute pre-commit hooks based on input parametrization)
     end
   end
   t_call-->g_start

@@ -1,0 +1,21 @@
+name: Actions PR CI
+run-name: Actions PR CI
+
+permissions:
+  contents: write
+  issues: read
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+jobs:
+
+  pre_commit:
+    name: Pre-Commit
+    uses: ./.github/workflows/_pre_commit.yml
+    with:
+      pre-commit-hooks: checkov

@@ -30,8 +30,8 @@ jobs:
       - name: set outputs
         id: preqs
         run: |
-          echo "::set-output name=paths::$(echo -n "${{ inputs.paths }}" | jq -R -s -c 'split(",")')"
-          echo "::set-output name=tf_versions::$(echo "${{ inputs.tf_version }} " | jq -R -s -c 'split(" ")[:-1]')"
+          echo "paths=$(echo -n "${{ inputs.paths }}" | jq -R -s -c 'split(",")')" >> $GITHUB_OUTPUT
+          echo "tf_versions=$(echo "${{ inputs.tf_version }} " | jq -R -s -c 'split(" ")[:-1]')" >> $GITHUB_OUTPUT
         
   validate:
     needs: [prerequisites]
