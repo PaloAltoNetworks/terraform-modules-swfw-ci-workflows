@@ -75,7 +75,8 @@ jobs:
         with:
           tf_version: ${{ matrix.tf_version }}
           path: ${{ matrix.path }}
-          do_apply: true
+          do_apply: ${{ inputs.do_apply }}
+          indepotency: ${{ inputs.indepotency }}
 
       - name: run plan/apply on AWS
         if: inputs.cloud == 'aws'
