@@ -18,6 +18,10 @@ on:
         description: Path to module that will be tested, a space delimited list of relative paths
         type: string
         required: true
+      max_parallel:
+        description: Maximum parallel jobs in matrix strategy
+        type: number
+        default: 10
 
 jobs:
   prerequisites:
@@ -38,6 +42,7 @@ jobs:
     name: 'validate ${{ matrix.path }}@${{ matrix.tf_version }}'
     runs-on: ubuntu-latest
     strategy:
+      max-parallel: ${{ inputs.max_parallel }}
       matrix:
         tf_version: ${{ fromJson(needs.prerequisites.outputs.tf_versions) }}
         path: ${{ fromJson(needs.prerequisites.outputs.paths) }}

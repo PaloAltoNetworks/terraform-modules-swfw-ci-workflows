@@ -22,7 +22,7 @@ on:
         description: When set to true runs also apply
         type: boolean
         default: false
-      indepotency:
+      idempotence:
         description: When set to true runs plan to on already applied configuration
         type: boolean
         default: true
@@ -105,7 +105,7 @@ jobs:
           tf_version: ${{ matrix.tf_version }}
           path: ${{ matrix.path }}
           do_apply: ${{ inputs.do_apply }}
-          indepotency: ${{ inputs.indepotency }}
+          idempotence: ${{ inputs.idempotence }}
 
       - name: run plan/apply on AWS
         if: inputs.cloud == 'aws'
