@@ -57,21 +57,12 @@ jobs:
             modules/**/*.tf
             examples/**/*.tf
 
-      # - name: show raw DIFF
-      #   env:
-      #     DIFFS: ${{ steps.diff.outputs.all_changed_files }}
-      #   shell: bash
-      #   run: |
-      #     echo $DIFFS
-
       - name: extract paths for tasks
         id: format
         env:
           DIFFS: ${{ steps.diff.outputs.all_changed_files }}
         shell: bash
         run: |
-
-          set -o pipefail
           # build an array from the DIFFS input
           DIFFS_ARRAY=(${DIFFS//@/ })
 
@@ -80,10 +71,13 @@ jobs:
           for ELEMENT in ${DIFFS_ARRAY[*]}; do
             DIRS+=($(echo $ELEMENT | sed -E "s/^(modules|examples)\/(.+)\/.*$/\1\/\2/" ))
           done
+          # deduplicate paths
+          IFS=$'\n' DIRS_DEDUPLICATED=($(sort -u <<< "${DIRS[*]}"))
+          unset IFS
 
           # from folders array extract only modules paths
           ## double subshell here is to hide grep returning 1 when no modules paths are present in $DIRS
-          IFS=$'\n' DIFF_MODULES_ARRAY=($(echo $(grep modules <<< "${DIRS[*]}")))
+          IFS=$'\n' DIFF_MODULES_ARRAY=($(echo $(grep modules <<< "${DIRS_DEDUPLICATED[*]}")))
           unset IFS
 
           # use these paths to discover dependencies - find examples using modules from the list
@@ -91,30 +85,31 @@ jobs:
           for ELEMENT in ${DIFF_MODULES_ARRAY[*]}; do
             EXAMPLES_DISCOVERED+=($(echo $(grep -rl "$ELEMENT" examples/*/*.tf | sed -E "s/^(examples\/.*)\/.*$/\1/g")))
           done
-          
+
           # deduplicate list of example paths
           IFS=$'\n' EXAMPLES_DISCOVERED_DEDUPLICATED=($(sort -u <<<  "${EXAMPLES_DISCOVERED[*]}"))
           unset IFS
-          
+
           # create a combined list of folders containin original paths + discovered dependencies
-          COMBINED_FOLDERS=(${EXAMPLES_DISCOVERED_DEDUPLICATED[*]} ${DIRS[*]})
+          COMBINED_FOLDERS=(${EXAMPLES_DISCOVERED_DEDUPLICATED[*]} ${DIRS_DEDUPLICATED[*]})
           # deduplicate examples from the list
           IFS=$'\n' COMBINED_FOLDERS_DEDUPLICATED=($(sort -u <<<  "${COMBINED_FOLDERS[*]}"))
           unset IFS
-          
+
           # extract only examples from the deduplicated list
           IFS=$'\n' PLAN_DIRS=($(echo $(grep examples <<< "${COMBINED_FOLDERS_DEDUPLICATED[*]}")))
           unset IFS
-          
-          DIR_DIFF=$(echo ${DIRS[*]} | tr ' ' ',')
+
+          DIR_DIFF=$(echo ${DIRS_DEDUPLICATED[*]} | tr ' ' ',')
           PLAN_PATHS=$(echo ${PLAN_DIRS[*]} | tr ' ' ',')
-          
+
           # a list of chagned paths, used for validation tasks
           echo "dir_diff=$DIR_DIFF" >> $GITHUB_OUTPUT
           # a list of changed files, used for pre-commit tasks
           echo "files_diff=${DIFFS_ARRAY[*]}" >> $GITHUB_OUTPUT
           # a list of affected and changed examples, used for plan/apply tasks
           echo "plan_paths=$PLAN_PATHS" >> $GITHUB_OUTPUT
+
 
   pre_commit:
     name: Pre-Commit
