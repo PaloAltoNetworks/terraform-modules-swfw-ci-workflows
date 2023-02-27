@@ -116,48 +116,31 @@ jobs:
           # a list of affected and changed examples, used for plan/apply tasks
           echo "plan_paths=$PLAN_PATHS" >> $GITHUB_OUTPUT
 
-  # debugger:
-  #   name: debug outputs
-  #   runs-on: ubuntu-latest
-  #   needs:
-  #     - tf_prereqs
-  #   steps:
-  #     - name: runner
-  #       env:
-  #         # changed_files: ${{ needs.tf_prereqs.outputs.changed_files }}
-  #         # validate_paths: ${{ needs.tf_prereqs.outputs.validate_paths }}
-  #         plan_paths: ${{ needs.tf_prereqs.outputs.plan_paths }}
-  #       shell: bash
-  #       run: |
-  #         # echo "changed_files: $changed_files"
-  #         # echo "validate_paths: $validate_paths"
-  #         echo "plan_paths: $plan_paths"
-
-  # pre_commit:
-  #   name: Pre-Commit
-  #   needs: [tf_prereqs]
-  #   if: ${{ needs.tf_prereqs.outputs.changed_files != '' }}
-  #   uses: ./.github/workflows/_pre_commit.yml
-  #   with:
-  #     pre-commit-hooks: ${{ inputs.pre-commit-hooks }}
-  #     pre-commit-files: ${{ needs.tf_prereqs.outputs.changed_files }}
+  pre_commit:
+    name: Pre-Commit
+    needs: [tf_prereqs]
+    if: ${{ needs.tf_prereqs.outputs.changed_files != '' }}
+    uses: ./.github/workflows/_pre_commit.yml
+    with:
+      pre-commit-hooks: ${{ inputs.pre-commit-hooks }}
+      pre-commit-files: ${{ needs.tf_prereqs.outputs.changed_files }}
 
 
-  # validate:
-  #   name: validate all changed modules
-  #   needs: [tf_prereqs]
-  #   if: ${{ needs.tf_prereqs.outputs.validate_paths != '' }}
-  #   uses: ./.github/workflows/_tf_validate.yml
-  #   with:
-  #     tf_version: ${{ inputs.tf_version }}
-  #     paths: ${{ needs.tf_prereqs.outputs.validate_paths }}
-  #     max_parallel: ${{ inputs.max_parallel }}
+  validate:
+    name: validate all changed modules
+    needs: [tf_prereqs]
+    if: ${{ needs.tf_prereqs.outputs.validate_paths != '' }}
+    uses: ./.github/workflows/_tf_validate.yml
+    with:
+      tf_version: ${{ inputs.tf_version }}
+      paths: ${{ needs.tf_prereqs.outputs.validate_paths }}
+      max_parallel: ${{ inputs.max_parallel }}
 
 
   plan_apply:
     name: run plan changed examples and dependencies
     needs: 
-      # - validate
+      - validate
       - tf_prereqs
     if: ${{ needs.tf_prereqs.outputs.plan_paths != '' }}
     uses: ./.github/workflows/_tf_plan_apply.yml
@@ -174,20 +157,20 @@ jobs:
     secrets: inherit
 
 
-  # branch_protection_junction:
-  #   name: junction point for branch protection
-  #   needs:
-  #     - validate
-  #     - pre_commit
-  #     - plan_apply
-  #   if: always()
-  #   permissions:
-  #     actions: read
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: check statuses of other jobs
-  #       uses: technote-space/workflow-conclusion-action@v3
+  branch_protection_junction:
+    name: junction point for branch protection
+    needs:
+      - validate
+      - pre_commit
+      - plan_apply
+    if: always()
+    permissions:
+      actions: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: check statuses of other jobs
+        uses: technote-space/workflow-conclusion-action@v3
 
-  #     - name: branch protection check validation point
-  #       run: | 
-  #         if [[ "$WORKFLOW_CONCLUSION" == "failure" ]]; then exit 1; fi
+      - name: branch protection check validation point
+        run: | 
+          if [[ "$WORKFLOW_CONCLUSION" == "failure" ]]; then exit 1; fi
