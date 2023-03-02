@@ -86,7 +86,6 @@ jobs:
           echo "modules=$(echo $(ls -d1 examples/* modules/*) | tr ' ' ',')" >> $GITHUB_OUTPUT
           echo "examples=$(echo $(ls -d1 examples/*) | tr ' ' ',')" >> $GITHUB_OUTPUT
 
-
   validate:
     name: validate terraform code
     needs: [tf_prereqs]
@@ -102,6 +101,7 @@ jobs:
     name: run plan and/or apply on examples
     needs: 
       - validate
+      - tf_prereqs
     if: ${{ needs.tf_prereqs.outputs.examples != '' }}
     uses: ./.github/workflows/_tf_plan_apply.yml
     permissions:

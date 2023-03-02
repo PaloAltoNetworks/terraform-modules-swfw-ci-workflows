@@ -50,7 +50,7 @@ jobs:
       - name: set outputs
         id: preqs
         run: |
-          echo paths: $PATHS
+          echo paths $PATHS
           echo tf versions $TFVER
 
           echo
@@ -66,7 +66,7 @@ jobs:
         
   terraform:
     needs: [prerequisites]
-    name: ' plan/apply ${{ matrix.path }}@${{ matrix.tf_version }}'
+    name: 'plan/apply ${{ matrix.path }}@${{ matrix.tf_version }}'
     permissions:
       contents: read
       id-token: write
