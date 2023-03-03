@@ -39,8 +39,8 @@ jobs:
     name: terraform modules discovery
     runs-on: ubuntu-latest
     outputs:
-      validate_paths: ${{ steps.format.outputs.dir_diff }}
-      plan_paths: ${{ steps.format.outputs.plan_paths }}
+      validate_paths: ${{ steps.format.outputs.validate_diff }}
+      plan_paths: ${{ steps.format.outputs.apply_diff }}
       changed_files: ${{ steps.format.outputs.files_diff }}
     steps:
       - name: checkout code
@@ -48,67 +48,93 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: get diff with base branch
-        id: diff
+      - name: get diff with base branch, modules
+        id: diff_modules
         uses: tj-actions/changed-files@v32
         with:
           separator: "@"
-          files: |
-            modules/**/*.tf
-            examples/**/*.tf
+          files: modules/**/*.tf
+
+      - name: get diff with base branch, examples
+        id: diff_examples
+        uses: tj-actions/changed-files@v32
+        with:
+          separator: "@"
+          files: examples/**/*.tf
+
+      - name: get diff with base branch, examples, varfiles
+        id: diff_tfvars
+        uses: tj-actions/changed-files@v32
+        with:
+          separator: "@"
+          files: examples/**/*.tfvars
 
       - name: extract paths for tasks
         id: format
         env:
-          DIFFS: ${{ steps.diff.outputs.all_changed_files }}
+          DIFF_MODULES: ${{ steps.diff_modules.outputs.all_changed_files }}
+          DIFF_EXAMPLES: ${{ steps.diff_examples.outputs.all_changed_files }}
+          DIFF_TFVARS: ${{ steps.diff_tfvars.outputs.all_changed_files }}
         shell: bash
         run: |
-          # build an array from the DIFFS input
-          DIFFS_ARRAY=(${DIFFS//@/ })
+          DIFF_MODULES_ARRAY=(${DIFF_MODULES//@/ })
+          DIFF_EXAMPLES_ARRAY=(${DIFF_EXAMPLES//@/ })
+          DIFF_TFVARS_ARRAY=(${DIFF_TFVARS//@/ })
+
 
           # extract folder names from DIFFS
-          DIRS=()
-          for ELEMENT in ${DIFFS_ARRAY[*]}; do
-            DIRS+=($(echo $ELEMENT | sed -E "s/^(modules|examples)\/(.+)\/.*$/\1\/\2/" ))
+          DIRS_MODULES=()
+          for ELEMENT in ${DIFF_MODULES_ARRAY[*]}; do
+            DIRS_MODULES+=($(echo $ELEMENT | sed -E "s/^(modules)\/(.+)\/.*$/\1\/\2/" ))
           done
           # deduplicate paths
-          IFS=$'\n' DIRS_DEDUPLICATED=($(sort -u <<< "${DIRS[*]}"))
+          IFS=$'\n' DIRS_MODULES_DEDUP=($(sort -u <<< "${DIRS_MODULES[*]}"))
           unset IFS
 
-          # from folders array extract only modules paths
-          ## double subshell here is to hide grep returning 1 when no modules paths are present in $DIRS
-          IFS=$'\n' DIFF_MODULES_ARRAY=($(echo $(grep modules <<< "${DIRS_DEDUPLICATED[*]}")))
+
+          DIRS_EXAMPLES=()
+          for ELEMENT in ${DIFF_EXAMPLES_ARRAY[*]}; do
+            DIRS_EXAMPLES+=($(echo $ELEMENT | sed -E "s/^(examples)\/(.+)\/.*$/\1\/\2/" ))
+          done
+          # deduplicate paths
+          IFS=$'\n' DIRS_EXAMPLES_DEDUP=($(sort -u <<< "${DIRS_EXAMPLES[*]}"))
           unset IFS
+
+
+          DIRS_TFVARS=()
+          for ELEMENT in ${DIFF_TFVARS_ARRAY[*]}; do
+            DIRS_TFVARS+=($(echo $ELEMENT | sed -E "s/^(examples)\/(.+)\/.*$/\1\/\2/" ))
+          done
+          # deduplicate paths
+          IFS=$'\n' DIRS_TFVARS_DEDUP=($(sort -u <<< "${DIRS_TFVARS[*]}"))
+          unset IFS
+
 
           # use these paths to discover dependencies - find examples using modules from the list
           EXAMPLES_DISCOVERED=()
-          for ELEMENT in ${DIFF_MODULES_ARRAY[*]}; do
-            EXAMPLES_DISCOVERED+=($(echo $(grep -rl "$ELEMENT" examples/*/*.tf | sed -E "s/^(examples\/.*)\/.*$/\1/g")))
+          for ELEMENT in ${DIRS_MODULES_DEDUP[*]}; do
+            EXAMPLES_DISCOVERED+=($(echo $(grep -rl "$ELEMENT" examples/*/main.tf | sed -E "s/^(examples\/.*)\/.*$/\1/g")))
           done
-
           # deduplicate list of example paths
-          IFS=$'\n' EXAMPLES_DISCOVERED_DEDUPLICATED=($(sort -u <<<  "${EXAMPLES_DISCOVERED[*]}"))
+          IFS=$'\n' EXAMPLES_DISCOVERED_DEDUP=($(sort -u <<<  "${EXAMPLES_DISCOVERED[*]}"))
           unset IFS
 
-          # create a combined list of folders containin original paths + discovered dependencies
-          COMBINED_FOLDERS=(${EXAMPLES_DISCOVERED_DEDUPLICATED[*]} ${DIRS_DEDUPLICATED[*]})
-          # deduplicate examples from the list
-          IFS=$'\n' COMBINED_FOLDERS_DEDUPLICATED=($(sort -u <<<  "${COMBINED_FOLDERS[*]}"))
+
+          DIRS_VALIDATE=(${DIRS_MODULES_DEDUP[*]} ${DIRS_EXAMPLES_DEDUP[*]})
+          FILES_PRECOMMIT=(${DIFF_MODULES_ARRAY[*]} ${DIFF_EXAMPLES_ARRAY[*]} ${DIFF_TFVARS_ARRAY[*]})
+          DIRS_APPLY=(${DIRS_EXAMPLES_DEDUP[*]} ${EXAMPLES_DISCOVERED_DEDUP[*]} ${DIRS_TFVARS_DEDUP[*]})
+          IFS=$'\n' DIRS_APPLY_DEDUP=($(sort -u <<<  "${DIRS_APPLY[*]}"))
           unset IFS
 
-          # extract only examples from the deduplicated list
-          IFS=$'\n' PLAN_DIRS=($(echo $(grep examples <<< "${COMBINED_FOLDERS_DEDUPLICATED[*]}")))
-          unset IFS
-
-          DIR_DIFF=$(echo ${DIRS_DEDUPLICATED[*]} | tr ' ' ',')
-          PLAN_PATHS=$(echo ${PLAN_DIRS[*]} | tr ' ' ',')
+          VALIDATE_DIFF=$(echo ${DIRS_VALIDATE[*]} | tr ' ' ',')
+          APPLY_DIFF=$(echo ${DIRS_APPLY_DEDUP[*]} | tr ' ' ',')
 
           # a list of chagned paths, used for validation tasks
-          echo "dir_diff=$DIR_DIFF" >> $GITHUB_OUTPUT
-          # a list of changed files, used for pre-commit tasks
-          echo "files_diff=${DIFFS_ARRAY[*]}" >> $GITHUB_OUTPUT
+          echo "validate_diff=$VALIDATE_DIFF" >> $GITHUB_OUTPUT
           # a list of affected and changed examples, used for plan/apply tasks
-          echo "plan_paths=$PLAN_PATHS" >> $GITHUB_OUTPUT
+          echo "apply_diff=$APPLY_DIFF" >> $GITHUB_OUTPUT
+          # a list of changed files, used for pre-commit tasks
+          echo "files_diff=${FILES_PRECOMMIT[*]}" >> $GITHUB_OUTPUT
 
 
   pre_commit:
