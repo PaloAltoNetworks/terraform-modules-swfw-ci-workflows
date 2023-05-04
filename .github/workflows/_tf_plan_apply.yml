@@ -88,7 +88,6 @@ jobs:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          TF_IN_AUTOMATION: true
         with:
           tf_version: ${{ matrix.tf_version }}
           path: ${{ matrix.path }}
@@ -102,3 +101,24 @@ jobs:
       - name: run plan/apply on GCP
         if: inputs.cloud == 'gcp'
         run: echo GCP placeholder
+
+  cleanup:
+    needs: [terraform]
+    name: subscription cleanup
+    if: cancelled() || failure()
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: checkout code
+        uses: actions/checkout@v3
+
+      - name: cleanup Subscription
+        if: inputs.cloud == 'azure'
+        uses: ./.github/actions/sub_cleanup
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
