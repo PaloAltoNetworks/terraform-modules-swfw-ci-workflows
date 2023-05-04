@@ -34,6 +34,10 @@ on:
         description: "Decide against which public cloud the code will be run. Possible values: azure, aws, gcp"
         type: string
         required: true
+      apply_timeout:
+        description: Maximum time to run the Terraform apply step
+        type: number
+        default: 30
 
 jobs:
 
@@ -83,6 +87,7 @@ jobs:
 
       - name: run plan/apply on Azure for ${{ matrix.path }}
         if: inputs.cloud == 'azure'
+        timeout-minutes: ${{ inputs.apply_timeout }}
         uses: ./.github/actions/plan_apply
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -104,7 +109,7 @@ jobs:
 
   cleanup:
     needs: [terraform]
-    name: subscription cleanup
+    name: cleanup infrastructure in case of CI failure
     if: cancelled() || failure()
     permissions:
       contents: read
@@ -115,10 +120,18 @@ jobs:
       - name: checkout code
         uses: actions/checkout@v3
 
-      - name: cleanup Subscription
+      - name: cleanup Azure Subscription
         if: inputs.cloud == 'azure'
         uses: ./.github/actions/sub_cleanup
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+      - name: cleanup AWS
+        if: inputs.cloud == 'aws'
+        run: echo AWS placeholder
+
+      - name: cleanup GCP
+        if: inputs.cloud == 'gcp'
+        run: echo GCP placeholder
