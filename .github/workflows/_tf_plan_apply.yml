@@ -102,7 +102,7 @@ jobs:
       - name: run plan/apply on AWS
         if: inputs.cloud == 'aws'
         timeout-minutes: ${{ inputs.apply_timeout }}
-        uses: ./.github/actions/terratest
+        uses: ./.github/actions/plan_apply
         with:
           role-to-assume: ${{ secrets.ASSUME_ROLE }}
           role-session-name: gh-action-role-session
