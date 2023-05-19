@@ -105,7 +105,7 @@ jobs:
         uses: ./.github/actions/plan_apply
         env:
           ASSUME_ROLE: ${{ secrets.ASSUME_ROLE }}
-          AWS_REGION: ${{ env.AWS_REGION }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           tf_version: ${{ matrix.tf_version }}
           path: ${{ matrix.path }}
