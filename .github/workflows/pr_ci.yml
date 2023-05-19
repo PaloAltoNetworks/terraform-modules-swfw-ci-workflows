@@ -75,11 +75,13 @@ jobs:
           DIFF_MODULES: ${{ steps.diff_modules.outputs.all_changed_files }}
           DIFF_EXAMPLES: ${{ steps.diff_examples.outputs.all_changed_files }}
           DIFF_TFVARS: ${{ steps.diff_tfvars.outputs.all_changed_files }}
+          DIFF_TESTS: ${{ steps.diff_tfvars.outputs.all_changed_files }}
         shell: bash
         run: |
           DIFF_MODULES_ARRAY=(${DIFF_MODULES//@/ })
           DIFF_EXAMPLES_ARRAY=(${DIFF_EXAMPLES//@/ })
           DIFF_TFVARS_ARRAY=(${DIFF_TFVARS//@/ })
+          DIRS_TESTS_ARRAY=(${DIFF_TESTS//@/ })
 
 
           # extract folder names from DIFFS
@@ -110,6 +112,15 @@ jobs:
           unset IFS
 
 
+          DIRS_TESTS=()
+          for ELEMENT in ${DIRS_TESTS_ARRAY[*]}; do
+            DIRS_TESTS+=($(echo $ELEMENT | sed -E "s/^(tests)\/(.+)\/.*$/\1\/\2/" ))
+          done
+          # deduplicate paths
+          IFS=$'\n' DIRS_TESTS_DEDUP=($(sort -u <<< "${DIRS_TESTS[*]}"))
+          unset IFS
+
+
           # use these paths to discover dependencies - find examples using modules from the list
           EXAMPLES_DISCOVERED=()
           for ELEMENT in ${DIRS_MODULES_DEDUP[*]}; do
@@ -130,7 +141,7 @@ jobs:
           DIRS_VALIDATE=(${DIRS_MODULES_DEDUP[*]} ${DIRS_EXAMPLES_DEDUP[*]})
           FILES_PRECOMMIT=(${DIFF_MODULES_ARRAY[*]} ${DIFF_EXAMPLES_ARRAY[*]} ${DIFF_TFVARS_ARRAY[*]})
           DIRS_APPLY=(${DIRS_EXAMPLES_DEDUP[*]} ${EXAMPLES_DISCOVERED_DEDUP[*]} ${DIRS_TFVARS_DEDUP[*]})
-          DIRS_TERRATEST=(${TESTS_DISCOVERED[*]})
+          DIRS_TERRATEST=(${TESTS_DISCOVERED[*]} ${DIRS_TESTS_DEDUP[*]})
           IFS=$'\n' DIRS_APPLY_DEDUP=($(sort -u <<<  "${DIRS_APPLY[*]}"))
           unset IFS
 
@@ -173,7 +184,7 @@ jobs:
 
   plan_apply:
     name: run plan changed examples and dependencies
-    needs: 
+    needs:
       - validate
       - tf_prereqs
     if: ${{ needs.tf_prereqs.outputs.plan_paths != '' }}
@@ -206,5 +217,5 @@ jobs:
         uses: technote-space/workflow-conclusion-action@v3
 
       - name: branch protection check validation point
-        run: | 
+        run: |
           if [[ "$WORKFLOW_CONCLUSION" == "failure" ]]; then exit 1; fi
