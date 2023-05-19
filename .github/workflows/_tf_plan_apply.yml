@@ -103,10 +103,14 @@ jobs:
         if: inputs.cloud == 'aws'
         timeout-minutes: ${{ inputs.apply_timeout }}
         uses: ./.github/actions/plan_apply
+        env:
+          ASSUME_ROLE: ${{ secrets.ASSUME_ROLE }}
+          AWS_REGION: ${{ env.AWS_REGION }}
         with:
-          role-to-assume: ${{ secrets.ASSUME_ROLE }}
-          role-session-name: gh-action-role-session
-          aws-region: ${{ env.AWS_REGION }}
+          tf_version: ${{ matrix.tf_version }}
+          path: ${{ matrix.path }}
+          do_apply: ${{ inputs.do_apply }}
+          idempotence: ${{ inputs.idempotence }}
 
       - name: run plan/apply on GCP
         if: inputs.cloud == 'gcp'
