@@ -101,7 +101,12 @@ jobs:
 
       - name: run plan/apply on AWS
         if: inputs.cloud == 'aws'
-        run: echo AWS placeholder
+        timeout-minutes: ${{ inputs.apply_timeout }}
+        uses: ./.github/actions/terratest
+        with:
+          role-to-assume: ${{ secrets.ASSUME_ROLE }}
+          role-session-name: gh-action-role-session
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: run plan/apply on GCP
         if: inputs.cloud == 'gcp'
