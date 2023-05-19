@@ -69,13 +69,20 @@ jobs:
           separator: "@"
           files: examples/**/*.tfvars
 
+      - name: get diff with base branch, tests
+        id: diff_tests
+        uses: tj-actions/changed-files@v35
+        with:
+          separator: "@"
+          files: tests/**/*
+
       - name: extract paths for tasks
         id: format
         env:
           DIFF_MODULES: ${{ steps.diff_modules.outputs.all_changed_files }}
           DIFF_EXAMPLES: ${{ steps.diff_examples.outputs.all_changed_files }}
           DIFF_TFVARS: ${{ steps.diff_tfvars.outputs.all_changed_files }}
-          DIFF_TESTS: ${{ steps.diff_tfvars.outputs.all_changed_files }}
+          DIFF_TESTS: ${{ steps.diff_tests.outputs.all_changed_files }}
         shell: bash
         run: |
           DIFF_MODULES_ARRAY=(${DIFF_MODULES//@/ })
