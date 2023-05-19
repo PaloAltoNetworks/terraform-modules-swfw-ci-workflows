@@ -119,10 +119,18 @@ jobs:
           IFS=$'\n' EXAMPLES_DISCOVERED_DEDUP=($(sort -u <<<  "${EXAMPLES_DISCOVERED[*]}"))
           unset IFS
 
+          TESTS_DISCOVERED=()
+          for ELEMENT in ${DIRS_MODULES_DEDUP[*]}; do
+            TESTS_DISCOVERED+=($(echo $(grep -rl "$ELEMENT" tests/*/main.tf | sed -E "s/^(tests\/.*)\/.*$/\1/g")))
+          done
+          # deduplicate list of test paths
+          IFS=$'\n' TESTS_DISCOVERED=($(sort -u <<<  "${TESTS_DISCOVERED[*]}"))
+          unset IFS
 
           DIRS_VALIDATE=(${DIRS_MODULES_DEDUP[*]} ${DIRS_EXAMPLES_DEDUP[*]})
           FILES_PRECOMMIT=(${DIFF_MODULES_ARRAY[*]} ${DIFF_EXAMPLES_ARRAY[*]} ${DIFF_TFVARS_ARRAY[*]})
           DIRS_APPLY=(${DIRS_EXAMPLES_DEDUP[*]} ${EXAMPLES_DISCOVERED_DEDUP[*]} ${DIRS_TFVARS_DEDUP[*]})
+          DIRS_TERRATEST=(${TESTS_DISCOVERED[*]})
           IFS=$'\n' DIRS_APPLY_DEDUP=($(sort -u <<<  "${DIRS_APPLY[*]}"))
           unset IFS
 
@@ -136,6 +144,11 @@ jobs:
           # a list of changed files, used for pre-commit tasks
           echo "files_diff=${FILES_PRECOMMIT[*]}" >> $GITHUB_OUTPUT
 
+          echo "-------RESULTS----------"
+          echo "validate_diff=$VALIDATE_DIFF"
+          echo "apply_diff=$APPLY_DIFF"
+          echo "files_diff=${FILES_PRECOMMIT[*]}"
+          echo "terratest_diff=${DIRS_TERRATEST[*]}"
 
   pre_commit:
     name: Pre-Commit
