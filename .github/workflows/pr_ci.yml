@@ -42,6 +42,7 @@ jobs:
       validate_paths: ${{ steps.format.outputs.validate_diff }}
       plan_paths: ${{ steps.format.outputs.apply_diff }}
       changed_files: ${{ steps.format.outputs.files_diff }}
+      terratest_paths: ${{ steps.format.outputs.terratest_diff }}
     steps:
       - name: checkout code
         uses: actions/checkout@v3
@@ -161,12 +162,8 @@ jobs:
           echo "apply_diff=$APPLY_DIFF" >> $GITHUB_OUTPUT
           # a list of changed files, used for pre-commit tasks
           echo "files_diff=${FILES_PRECOMMIT[*]}" >> $GITHUB_OUTPUT
-
-          echo "-------RESULTS----------"
-          echo "validate_diff=$VALIDATE_DIFF"
-          echo "apply_diff=$APPLY_DIFF"
-          echo "files_diff=${FILES_PRECOMMIT[*]}"
-          echo "terratest_diff=${DIRS_TERRATEST[*]}"
+          # a list of tests to execute
+          echo "terratest_diff=${DIRS_TERRATEST[*]}" >> $GITHUB_OUTPUT
 
   pre_commit:
     name: Pre-Commit
