@@ -144,7 +144,10 @@ jobs:
 
       - name: cleanup AWS
         if: inputs.cloud == 'aws'
-        run: echo AWS placeholder
+        uses: ./.github/actions/sub_cleanup
+        env:
+          ASSUME_ROLE: ${{ secrets.ASSUME_ROLE }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
 
       - name: cleanup GCP
         if: inputs.cloud == 'gcp'
