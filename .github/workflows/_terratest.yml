@@ -47,6 +47,7 @@ jobs:
     outputs:
       paths: ${{ steps.preqs.outputs.paths }}
       tf_versions: ${{ steps.preqs.outputs.tf_versions }}
+      last_tf_version: ${{ steps.preqs.outputs.last_tf_version }}
     env:
       PATHS: ${{ inputs.paths }}
       TFVER: ${{ inputs.tf_version }}
@@ -67,6 +68,7 @@ jobs:
 
           echo "paths=$(echo -n "$PATHS" | jq -R -s -c 'split(",")')" >> $GITHUB_OUTPUT
           echo "tf_versions=$(echo "$TFVER " | jq -R -s -c 'split(" ")[:-1]')" >> $GITHUB_OUTPUT
+          echo "last_tf_version=$(echo "$TFVER " | jq -R -s -c 'split(" ")[-2]')" >> $GITHUB_OUTPUT
         
   terraform:
     needs: [prerequisites]
@@ -129,7 +131,13 @@ jobs:
 
       - name: cleanup AWS
         if: inputs.cloud == 'aws'
-        run: echo AWS placeholder
+        uses: ./.github/actions/sub_cleanup
+        env:
+          ASSUME_ROLE: ${{ secrets.ASSUME_ROLE }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          tf_version: ${{ needs.prerequisites.outputs.last_tf_version }}
+          path: "tests"
 
       - name: cleanup GCP
         if: inputs.cloud == 'gcp'
