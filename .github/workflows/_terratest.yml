@@ -22,6 +22,10 @@ on:
         description: When set to true runs also Terratest
         type: boolean
         default: false
+      fail_fast:
+        description: When set to true, GitHub will cancel all in-progress and queued jobs in the matrix if any job in the matrix fails. 
+        type: boolean
+        default: true
       max_parallel:
         description: Maximum parallel jobs in matrix strategy
         type: number
@@ -73,6 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       max-parallel: ${{ inputs.max_parallel }}
+      fail-fast: ${{ inputs.fail_fast }}
       matrix:
         tf_version: ${{ fromJson(needs.prerequisites.outputs.tf_versions) }}
         path: ${{ fromJson(needs.prerequisites.outputs.paths) }}
