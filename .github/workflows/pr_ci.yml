@@ -222,7 +222,6 @@ jobs:
     needs:
       - validate
       - tf_prereqs
-      - terratest
     if: ${{ needs.tf_prereqs.outputs.plan_paths != '' }}
     uses: ./.github/workflows/_tf_plan_apply.yml
     permissions:
