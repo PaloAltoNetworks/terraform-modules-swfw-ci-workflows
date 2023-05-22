@@ -84,6 +84,7 @@ jobs:
     outputs:
       modules: ${{ steps.paths.outputs.modules }}
       examples: ${{ steps.paths.outputs.examples }}
+      terratest_paths: ${{ steps.paths.outputs.terratest_paths }}
     steps:
       - name: checkout code
         uses: actions/checkout@v3
@@ -93,6 +94,7 @@ jobs:
         run: |
           echo "modules=$(echo $(ls -d1 examples/* modules/*) | tr ' ' ',')" >> $GITHUB_OUTPUT
           echo "examples=$(echo $(ls -d1 examples/*) | tr ' ' ',')" >> $GITHUB_OUTPUT
+          echo "terratest_paths=$(echo $(ls -d1 tests/*/) | tr ' ' ',')" >> $GITHUB_OUTPUT
 
   validate:
     name: validate terraform code
