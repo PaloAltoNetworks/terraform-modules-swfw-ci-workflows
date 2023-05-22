@@ -121,6 +121,7 @@ jobs:
       paths: ${{ needs.tf_prereqs.outputs.terratest_paths }}
       do_terratest: ${{ inputs.do_terratest }}
       idempotence: ${{ inputs.idempotence }}
+      fail_fast: ${{ inputs.fail_fast }}
       max_parallel: ${{ inputs.max_parallel }}
     secrets: inherit
 
@@ -142,6 +143,7 @@ jobs:
       paths: ${{ needs.tf_prereqs.outputs.examples }}
       do_apply: ${{ inputs.do_apply }}
       idempotence: ${{ inputs.idempotence }}
+      fail_fast: ${{ inputs.fail_fast }}
       max_parallel: ${{ inputs.max_parallel }}
     secrets: inherit
 
