@@ -156,9 +156,12 @@ jobs:
           DIRS_TERRATEST=(${TESTS_DISCOVERED[*]} ${DIRS_TESTS_DEDUP[*]})
           IFS=$'\n' DIRS_APPLY_DEDUP=($(sort -u <<<  "${DIRS_APPLY[*]}"))
           unset IFS
+          IFS=$'\n' DIRS_TERRATEST_DEDUP=($(sort -u <<<  "${DIRS_TERRATEST[*]}"))
+          unset IFS
 
           VALIDATE_DIFF=$(echo ${DIRS_VALIDATE[*]} | tr ' ' ',')
           APPLY_DIFF=$(echo ${DIRS_APPLY_DEDUP[*]} | tr ' ' ',')
+          TERRATEST_DIFF=$(echo ${DIRS_TERRATEST_DEDUP[*]} | tr ' ' ',')
 
           # a list of chagned paths, used for validation tasks
           echo "validate_diff=$VALIDATE_DIFF" >> $GITHUB_OUTPUT
@@ -167,7 +170,7 @@ jobs:
           # a list of changed files, used for pre-commit tasks
           echo "files_diff=${FILES_PRECOMMIT[*]}" >> $GITHUB_OUTPUT
           # a list of tests to execute
-          echo "terratest_diff=${DIRS_TERRATEST[*]}" >> $GITHUB_OUTPUT
+          echo "terratest_diff=$TERRATEST_DIFF" >> $GITHUB_OUTPUT
 
   pre_commit:
     name: Pre-Commit
