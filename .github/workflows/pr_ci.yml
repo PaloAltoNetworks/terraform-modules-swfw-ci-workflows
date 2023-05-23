@@ -21,7 +21,7 @@ on:
         type: boolean
         default: true
       fail_fast:
-        description: When set to true, GitHub will cancel all in-progress and queued jobs in the matrix if any job in the matrix fails. 
+        description: When set to true, GitHub will cancel all in-progress and queued jobs in the matrix if any job in the matrix fails.
         type: boolean
         default: true
       max_parallel:
@@ -245,6 +245,7 @@ jobs:
     needs:
       - validate
       - pre_commit
+      - terratest
       - plan_apply
     if: always()
     permissions:
