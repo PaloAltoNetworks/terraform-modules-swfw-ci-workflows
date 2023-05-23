@@ -81,6 +81,7 @@ jobs:
       - name: get diff with base branch, tests
         id: diff_tests
         uses: tj-actions/changed-files@v35
+        continue-on-error: true
         with:
           separator: "@"
           files: tests/**/*
