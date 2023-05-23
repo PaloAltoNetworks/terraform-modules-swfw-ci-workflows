@@ -156,6 +156,7 @@ jobs:
       - terratest
       - plan_apply
     runs-on: ubuntu-latest
+    if: always() && !contains(needs.terratest.result, 'failure') && contains(needs.plan_apply.result, 'success')
     permissions:
       contents: write
       issues: read

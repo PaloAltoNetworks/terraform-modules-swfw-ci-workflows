@@ -85,7 +85,7 @@ jobs:
         continue-on-error: true
         with:
           separator: "@"
-          files: tests/**/*
+          files: tests/**/*.{tf,go}
 
       - name: extract paths for tasks
         id: format
