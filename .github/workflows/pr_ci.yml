@@ -247,7 +247,7 @@ jobs:
       - pre_commit
       - terratest
       - plan_apply
-    if: always()
+    if: always() && !contains(needs.*.result, 'failure')
     permissions:
       actions: read
     runs-on: ubuntu-latest
