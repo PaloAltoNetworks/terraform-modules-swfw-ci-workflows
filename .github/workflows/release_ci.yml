@@ -34,6 +34,10 @@ on:
         description: "Decide against which public cloud the code will be run. Possible values: azure, aws, gcp"
         type: string
         required: true
+      apply_timeout:
+        description: Maximum time to run the Terraform apply step
+        type: number
+        default: 30
 
 jobs:
   release-prereqs:
@@ -122,6 +126,7 @@ jobs:
       tf_version: ${{ inputs.tf_version }}
       paths: ${{ needs.tf_prereqs.outputs.terratest_paths }}
       do_terratest: ${{ inputs.do_terratest }}
+      apply_timeout: ${{ inputs.apply_timeout }}
       fail_fast: ${{ inputs.fail_fast }}
       max_parallel: ${{ inputs.max_parallel }}
     secrets: inherit
@@ -142,6 +147,7 @@ jobs:
       tf_version: ${{ inputs.tf_version }}
       paths: ${{ needs.tf_prereqs.outputs.examples }}
       do_apply: ${{ inputs.do_apply }}
+      apply_timeout: ${{ inputs.apply_timeout }}
       idempotence: ${{ inputs.idempotence }}
       fail_fast: ${{ inputs.fail_fast }}
       max_parallel: ${{ inputs.max_parallel }}
