@@ -54,7 +54,7 @@ jobs:
       validate_paths: ${{ steps.format.outputs.validate_diff }}
       plan_paths: ${{ steps.format.outputs.apply_diff }}
       changed_files: ${{ steps.format.outputs.files_diff }}
-      terratest_paths: ${{ steps.format.outputs.terratest_diff }}
+      modules_terratest_paths: ${{ steps.format.outputs.modules_terratest_diff }}
     steps:
       - name: checkout code
         uses: actions/checkout@v3
@@ -111,7 +111,7 @@ jobs:
           for ELEMENT in ${DIFF_MODULES_ARRAY[*]}; do
             DIRS_MODULES+=($(echo $ELEMENT | sed -E "s/^(modules)\/(.+)\/.*$/\1\/\2/" ))
           done
-          # deduplicate paths
+          # MODULES - deduplicate paths
           IFS=$'\n' DIRS_MODULES_DEDUP=($(sort -u <<< "${DIRS_MODULES[*]}"))
           unset IFS
 
@@ -120,25 +120,16 @@ jobs:
           for ELEMENT in ${DIFF_EXAMPLES_ARRAY[*]}; do
             DIRS_EXAMPLES+=($(echo $ELEMENT | sed -E "s/^(examples)\/(.+)\/.*$/\1\/\2/" ))
           done
-          # deduplicate paths
+          # EXAMPLES - deduplicate paths
           IFS=$'\n' DIRS_EXAMPLES_DEDUP=($(sort -u <<< "${DIRS_EXAMPLES[*]}"))
           unset IFS
-
-
-          # DIRS_TFVARS=()
-          # for ELEMENT in ${DIFF_TFVARS_ARRAY[*]}; do
-          #   DIRS_TFVARS+=($(echo $ELEMENT | sed -E "s/^(examples)\/(.+)\/.*$/\1\/\2/" ))
-          # done
-          # # deduplicate paths
-          # IFS=$'\n' DIRS_TFVARS_DEDUP=($(sort -u <<< "${DIRS_TFVARS[*]}"))
-          # unset IFS
 
 
           DIRS_TESTS=()
           for ELEMENT in ${DIRS_TESTS_ARRAY[*]}; do
             DIRS_TESTS+=($(echo $ELEMENT | sed -E "s/^(tests)\/(.+)\/.*$/\1\/\2/" ))
           done
-          # deduplicate paths
+          # TESTS - deduplicate paths
           IFS=$'\n' DIRS_TESTS_DEDUP=($(sort -u <<< "${DIRS_TESTS[*]}"))
           unset IFS
 
@@ -152,12 +143,15 @@ jobs:
           IFS=$'\n' EXAMPLES_DISCOVERED_DEDUP=($(sort -u <<<  "${EXAMPLES_DISCOVERED[*]}"))
           unset IFS
 
-          TESTS_DISCOVERED=()
-          for ELEMENT in ${DIRS_MODULES_DEDUP[*]}; do
-            TESTS_DISCOVERED+=($(echo $(grep -rl "$ELEMENT" tests/*/main.tf | sed -E "s/^(tests\/.*)\/.*$/\1/g")))
+          MODULES_TESTS_DISCOVERED=()
+          for ELEMENT in ${DIRS_TESTS_DEDUP[*]}; do
+            NAME=$(echo "$ELEMENT" | cut -d '/' -f 2)
+            if [ $(ls modules | grep "^$NAME$") ]; then
+              MODULES_TESTS_DISCOVERED+=("modules/$NAME")
+            fi
           done
-          # deduplicate list of test paths
-          IFS=$'\n' TESTS_DISCOVERED=($(sort -u <<<  "${TESTS_DISCOVERED[*]}"))
+          # deduplicate list of module test paths
+          IFS=$'\n' MODULES_TESTS_DISCOVERED_DEDUP=($(sort -u <<<  "${MODULES_TESTS_DISCOVERED[*]}"))
           unset IFS
 
           DIRS_VALIDATE=(${DIRS_MODULES_DEDUP[*]} ${DIRS_EXAMPLES_DEDUP[*]} ${DIRS_TESTS_DEDUP[*]})
@@ -165,16 +159,17 @@ jobs:
           # FILES_PRECOMMIT=(${DIFF_MODULES_ARRAY[*]} ${DIFF_EXAMPLES_ARRAY[*]} ${DIFF_TFVARS_ARRAY[*]} ${DIRS_TESTS_ARRAY[*]})
           DIRS_APPLY=(${DIRS_EXAMPLES_DEDUP[*]} ${EXAMPLES_DISCOVERED_DEDUP[*]})
           # DIRS_APPLY=(${DIRS_EXAMPLES_DEDUP[*]} ${EXAMPLES_DISCOVERED_DEDUP[*]} ${DIRS_TFVARS_DEDUP[*]})
-          DIRS_TERRATEST=(${DIRS_MODULES_DEDUP[*]} ${DIRS_TESTS_DEDUP[*]})
+          MODULES_DIRS_TERRATEST=(${DIRS_MODULES_DEDUP[*]} ${MODULES_TESTS_DISCOVERED_DEDUP[*]})
           # DIRS_TERRATEST=(${TESTS_DISCOVERED[*]} ${DIRS_TESTS_DEDUP[*]})
           IFS=$'\n' DIRS_APPLY_DEDUP=($(sort -u <<<  "${DIRS_APPLY[*]}"))
           unset IFS
-          IFS=$'\n' DIRS_TERRATEST_DEDUP=($(sort -u <<<  "${DIRS_TERRATEST[*]}"))
+          IFS=$'\n' MODULES_DIRS_TERRATEST_DEDUP=($(sort -u <<<  "${MODULES_DIRS_TERRATEST[*]}"))
           unset IFS
 
           VALIDATE_DIFF=$(echo ${DIRS_VALIDATE[*]} | tr ' ' ',')
           APPLY_DIFF=$(echo ${DIRS_APPLY_DEDUP[*]} | tr ' ' ',')
-          TERRATEST_DIFF=$(echo ${DIRS_TERRATEST_DEDUP[*]} | tr ' ' ',')
+          MODULES_TERRATEST_DIFF=$(echo ${MODULES_DIRS_TERRATEST_DEDUP[*]} | tr ' ' ',')
+
 
           # a list of chagned paths, used for validation tasks
           echo "validate_diff=$VALIDATE_DIFF" >> $GITHUB_OUTPUT
@@ -182,8 +177,9 @@ jobs:
           echo "apply_diff=$APPLY_DIFF" >> $GITHUB_OUTPUT
           # a list of changed files, used for pre-commit tasks
           echo "files_diff=${FILES_PRECOMMIT[*]}" >> $GITHUB_OUTPUT
-          # a list of tests to execute
-          echo "terratest_diff=$TERRATEST_DIFF" >> $GITHUB_OUTPUT
+          # a list of modules tests to execute
+          echo "modules_terratest_diff=$MODULES_TERRATEST_DIFF" >> $GITHUB_OUTPUT
+
 
       - name: debug paths
         run: |
@@ -193,7 +189,7 @@ jobs:
           echo
           echo "changed_files: ${{ steps.format.outputs.files_diff }}"
           echo
-          echo "terratest_paths: ${{ steps.format.outputs.terratest_diff }}"
+          echo "modules_terratest_paths: ${{ steps.format.outputs.modules_terratest_diff }}"
           echo
 
   # pre_commit:
