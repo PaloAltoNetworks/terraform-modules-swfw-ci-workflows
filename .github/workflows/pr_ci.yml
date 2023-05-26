@@ -73,14 +73,14 @@ jobs:
         uses: tj-actions/changed-files@v35
         with:
           separator: "@"
-          files: examples/**/*.tf
+          files: examples/**/*.{tf,tfvars}
 
-      - name: get diff with base branch, examples, varfiles
-        id: diff_tfvars
-        uses: tj-actions/changed-files@v35
-        with:
-          separator: "@"
-          files: examples/**/*.tfvars
+      # - name: get diff with base branch, examples, varfiles
+      #   id: diff_tfvars
+      #   uses: tj-actions/changed-files@v35
+      #   with:
+      #     separator: "@"
+      #     files: examples/**/*.tfvars
 
       - name: get diff with base branch, tests
         id: diff_tests
@@ -96,13 +96,13 @@ jobs:
         env:
           DIFF_MODULES: ${{ steps.diff_modules.outputs.all_changed_files }}
           DIFF_EXAMPLES: ${{ steps.diff_examples.outputs.all_changed_files }}
-          DIFF_TFVARS: ${{ steps.diff_tfvars.outputs.all_changed_files }}
+          # DIFF_TFVARS: ${{ steps.diff_tfvars.outputs.all_changed_files }}
           DIFF_TESTS: ${{ steps.diff_tests.outputs.all_changed_files }}
         shell: bash
         run: |
           DIFF_MODULES_ARRAY=(${DIFF_MODULES//@/ })
           DIFF_EXAMPLES_ARRAY=(${DIFF_EXAMPLES//@/ })
-          DIFF_TFVARS_ARRAY=(${DIFF_TFVARS//@/ })
+          # DIFF_TFVARS_ARRAY=(${DIFF_TFVARS//@/ })
           DIRS_TESTS_ARRAY=(${DIFF_TESTS//@/ })
 
 
@@ -125,13 +125,13 @@ jobs:
           unset IFS
 
 
-          DIRS_TFVARS=()
-          for ELEMENT in ${DIFF_TFVARS_ARRAY[*]}; do
-            DIRS_TFVARS+=($(echo $ELEMENT | sed -E "s/^(examples)\/(.+)\/.*$/\1\/\2/" ))
-          done
-          # deduplicate paths
-          IFS=$'\n' DIRS_TFVARS_DEDUP=($(sort -u <<< "${DIRS_TFVARS[*]}"))
-          unset IFS
+          # DIRS_TFVARS=()
+          # for ELEMENT in ${DIFF_TFVARS_ARRAY[*]}; do
+          #   DIRS_TFVARS+=($(echo $ELEMENT | sed -E "s/^(examples)\/(.+)\/.*$/\1\/\2/" ))
+          # done
+          # # deduplicate paths
+          # IFS=$'\n' DIRS_TFVARS_DEDUP=($(sort -u <<< "${DIRS_TFVARS[*]}"))
+          # unset IFS
 
 
           DIRS_TESTS=()
@@ -161,9 +161,12 @@ jobs:
           unset IFS
 
           DIRS_VALIDATE=(${DIRS_MODULES_DEDUP[*]} ${DIRS_EXAMPLES_DEDUP[*]} ${DIRS_TESTS_DEDUP[*]})
-          FILES_PRECOMMIT=(${DIFF_MODULES_ARRAY[*]} ${DIFF_EXAMPLES_ARRAY[*]} ${DIFF_TFVARS_ARRAY[*]} ${DIRS_TESTS_ARRAY[*]})
-          DIRS_APPLY=(${DIRS_EXAMPLES_DEDUP[*]} ${EXAMPLES_DISCOVERED_DEDUP[*]} ${DIRS_TFVARS_DEDUP[*]})
-          DIRS_TERRATEST=(${TESTS_DISCOVERED[*]} ${DIRS_TESTS_DEDUP[*]})
+          FILES_PRECOMMIT=(${DIFF_MODULES_ARRAY[*]} ${DIFF_EXAMPLES_ARRAY[*]} ${DIRS_TESTS_ARRAY[*]})
+          # FILES_PRECOMMIT=(${DIFF_MODULES_ARRAY[*]} ${DIFF_EXAMPLES_ARRAY[*]} ${DIFF_TFVARS_ARRAY[*]} ${DIRS_TESTS_ARRAY[*]})
+          DIRS_APPLY=(${DIRS_EXAMPLES_DEDUP[*]} ${EXAMPLES_DISCOVERED_DEDUP[*]})
+          # DIRS_APPLY=(${DIRS_EXAMPLES_DEDUP[*]} ${EXAMPLES_DISCOVERED_DEDUP[*]} ${DIRS_TFVARS_DEDUP[*]})
+          DIRS_TERRATEST=(${DIRS_MODULES_DEDUP[*]} ${DIRS_TESTS_DEDUP[*]})
+          # DIRS_TERRATEST=(${TESTS_DISCOVERED[*]} ${DIRS_TESTS_DEDUP[*]})
           IFS=$'\n' DIRS_APPLY_DEDUP=($(sort -u <<<  "${DIRS_APPLY[*]}"))
           unset IFS
           IFS=$'\n' DIRS_TERRATEST_DEDUP=($(sort -u <<<  "${DIRS_TERRATEST[*]}"))
@@ -182,85 +185,96 @@ jobs:
           # a list of tests to execute
           echo "terratest_diff=$TERRATEST_DIFF" >> $GITHUB_OUTPUT
 
-  pre_commit:
-    name: Pre-Commit
-    needs: [tf_prereqs]
-    if: ${{ needs.tf_prereqs.outputs.changed_files != '' }}
-    uses: ./.github/workflows/_pre_commit.yml
-    with:
-      pre-commit-hooks: ${{ inputs.pre-commit-hooks }}
-      pre-commit-files: ${{ needs.tf_prereqs.outputs.changed_files }}
-
-
-  validate:
-    name: validate all changed modules
-    needs: [tf_prereqs]
-    if: ${{ needs.tf_prereqs.outputs.validate_paths != '' }}
-    uses: ./.github/workflows/_tf_validate.yml
-    with:
-      tf_version: ${{ inputs.tf_version }}
-      paths: ${{ needs.tf_prereqs.outputs.validate_paths }}
-      max_parallel: ${{ inputs.max_parallel }}
-
-
-  terratest:
-    name: run Terratest for changed tests, modules and dependencies
-    needs:
-      - validate
-      - tf_prereqs
-    if: ${{ needs.tf_prereqs.outputs.terratest_paths != '' }}
-    uses: ./.github/workflows/_terratest.yml
-    permissions:
-      contents: read
-      id-token: write
-    with:
-      cloud: ${{ inputs.cloud }}
-      tf_version: ${{ inputs.tf_version }}
-      paths: ${{ needs.tf_prereqs.outputs.terratest_paths }}
-      do_terratest: ${{ inputs.do_terratest }}
-      apply_timeout: ${{ inputs.apply_timeout }}
-      fail_fast: ${{ inputs.fail_fast }}
-      max_parallel: ${{ inputs.max_parallel }}
-    secrets: inherit
-
-
-  plan_apply:
-    name: run plan changed examples and dependencies
-    needs:
-      - validate
-      - tf_prereqs
-    if: ${{ needs.tf_prereqs.outputs.plan_paths != '' }}
-    uses: ./.github/workflows/_tf_plan_apply.yml
-    permissions:
-      contents: read
-      id-token: write
-    with:
-      cloud: ${{ inputs.cloud }}
-      tf_version: ${{ inputs.tf_version }}
-      paths: ${{ needs.tf_prereqs.outputs.plan_paths }}
-      do_apply: ${{ inputs.do_apply }}
-      apply_timeout: ${{ inputs.apply_timeout }}
-      idempotence: ${{ inputs.idempotence }}
-      fail_fast: ${{ inputs.fail_fast }}
-      max_parallel: ${{ inputs.max_parallel }}
-    secrets: inherit
-
-
-  branch_protection_junction:
-    name: junction point for branch protection
-    needs:
-      - validate
-      - pre_commit
-      - terratest
-      - plan_apply
-    if: always() && !contains(needs.*.result, 'failure')
-    permissions:
-      actions: read
-    runs-on: ubuntu-latest
-    steps:
-      - name: check statuses of other jobs
-        uses: technote-space/workflow-conclusion-action@v3
-
-      - name: branch protection check validation point
+      - name: debug paths
         run: |
-          if [[ "$WORKFLOW_CONCLUSION" == "failure" ]]; then exit 1; fi
+          echo "validate_paths: ${{ steps.format.outputs.validate_diff }}"
+          echo
+          echo "plan_paths: ${{ steps.format.outputs.apply_diff }}"
+          echo
+          echo "changed_files: ${{ steps.format.outputs.files_diff }}"
+          echo
+          echo "terratest_paths: ${{ steps.format.outputs.terratest_diff }}"
+          echo
+
+  # pre_commit:
+  #   name: Pre-Commit
+  #   needs: [tf_prereqs]
+  #   if: ${{ needs.tf_prereqs.outputs.changed_files != '' }}
+  #   uses: ./.github/workflows/_pre_commit.yml
+  #   with:
+  #     pre-commit-hooks: ${{ inputs.pre-commit-hooks }}
+  #     pre-commit-files: ${{ needs.tf_prereqs.outputs.changed_files }}
+
+
+  # validate:
+  #   name: validate all changed modules
+  #   needs: [tf_prereqs]
+  #   if: ${{ needs.tf_prereqs.outputs.validate_paths != '' }}
+  #   uses: ./.github/workflows/_tf_validate.yml
+  #   with:
+  #     tf_version: ${{ inputs.tf_version }}
+  #     paths: ${{ needs.tf_prereqs.outputs.validate_paths }}
+  #     max_parallel: ${{ inputs.max_parallel }}
+
+
+  # terratest:
+  #   name: run Terratest for changed tests, modules and dependencies
+  #   needs:
+  #     - validate
+  #     - tf_prereqs
+  #   if: ${{ needs.tf_prereqs.outputs.terratest_paths != '' }}
+  #   uses: ./.github/workflows/_terratest.yml
+  #   permissions:
+  #     contents: read
+  #     id-token: write
+  #   with:
+  #     cloud: ${{ inputs.cloud }}
+  #     tf_version: ${{ inputs.tf_version }}
+  #     paths: ${{ needs.tf_prereqs.outputs.terratest_paths }}
+  #     do_terratest: ${{ inputs.do_terratest }}
+  #     apply_timeout: ${{ inputs.apply_timeout }}
+  #     fail_fast: ${{ inputs.fail_fast }}
+  #     max_parallel: ${{ inputs.max_parallel }}
+  #   secrets: inherit
+
+
+  # plan_apply:
+  #   name: run plan changed examples and dependencies
+  #   needs:
+  #     - validate
+  #     - tf_prereqs
+  #   if: ${{ needs.tf_prereqs.outputs.plan_paths != '' }}
+  #   uses: ./.github/workflows/_tf_plan_apply.yml
+  #   permissions:
+  #     contents: read
+  #     id-token: write
+  #   with:
+  #     cloud: ${{ inputs.cloud }}
+  #     tf_version: ${{ inputs.tf_version }}
+  #     paths: ${{ needs.tf_prereqs.outputs.plan_paths }}
+  #     do_apply: ${{ inputs.do_apply }}
+  #     apply_timeout: ${{ inputs.apply_timeout }}
+  #     idempotence: ${{ inputs.idempotence }}
+  #     fail_fast: ${{ inputs.fail_fast }}
+  #     max_parallel: ${{ inputs.max_parallel }}
+  #   secrets: inherit
+
+
+  # branch_protection_junction:
+  #   name: junction point for branch protection
+  #   needs:
+  #     - validate
+  #     - pre_commit
+  #     - terratest
+  #     - plan_apply
+  #   if: always() && !contains(needs.*.result, 'failure')
+  #   permissions:
+  #     actions: read
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: check statuses of other jobs
+  #       uses: technote-space/workflow-conclusion-action@v3
+
+  #     - name: branch protection check validation point
+  #       run: |
+  #         if [[ "$WORKFLOW_CONCLUSION" == "failure" ]]; then exit 1; fi
