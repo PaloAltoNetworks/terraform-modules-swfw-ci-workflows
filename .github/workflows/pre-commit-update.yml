@@ -5,11 +5,6 @@ permissions:
 
 on:
   workflow_call:
-    inputs:
-      script_ref:
-        description: Branch/TAG to download the Pre Commit dependencies update script
-        type: string
-        default: main
 
 jobs:
   update:
@@ -19,45 +14,52 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - name: try python
+      - name: checkout repository
+        uses: actions/checkout@v3
+
+      - name: install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: install Python requirements
+        shell: bash
+        run: python -m pip install pyyaml==6.0 requests==2.31
+
+      - name: run the update script
         shell: python
-        run: print("ehlo")
-      # - name: checkout repository
-      #   uses: actions/checkout@v3
+        run: | 
+          from os import environ
+          import yaml
+          import requests
 
-      # - name: download the python scripts
-      #   shell: bash
-      #   env:
-      #     FILES: poetry.toml pre-commit-update.py pyproject.toml
-      #   run: |
-      #     mkdir -p .github/scripts/
-      #     cd .github/scripts/
-      #     for F in ${FILES[*]}; do
-      #       URL="https://raw.githubusercontent.com/PaloAltoNetworks/terraform-modules-vmseries-ci-workflows/${{ inputs.script_ref }}/.github/scripts/${F}"
-      #       curl -s -S -f "$URL" -o "$F"
-      #     done
-      #     ls -l
+          pre_commit_config_path = "./.pre-commit-config.yaml"
 
-      # - name: install Python
-      #   uses: actions/setup-python@v4
-      #   with:
-      #     python-version: 3.11
+          with open(pre_commit_config_path, "r") as pre_commit:
+              try:
+                  pre_commit_config = yaml.safe_load(pre_commit)
+              except yaml.YAMLError as exc:
+                  print(exc)
+                  exit(1)
+          
+          for repo in pre_commit_config['repos']:
+              repo_url = repo['repo'].replace('.git','') if '.git' in repo['repo'] else repo['repo']
+              release = repo['rev']
+              headers = {'Accept': 'application/json'}
+              resp = requests.get(f"{repo_url}/refs?type=tag", headers=headers)
+              if resp.status_code == requests.codes.ok:
+                  latest_release = resp.json()['refs'][0]
+                  if release != latest_release:
+                      print(f'{repo_url} needs to be updated to {latest_release}, currently at {release}')
+                      repo['rev'] = latest_release
+              
+          with open(pre_commit_config_path, 'w') as pre_commit:
+              yaml.dump(pre_commit_config, pre_commit, default_flow_style=False)
 
-      # - name: install Poetry
-      #   uses: Gr1N/setup-poetry@v8
-      #   with: 
-      #     poetry-version: 1.4.2
-
-      # - name: run the update script
-      #   run: | 
-      #     cd .github/scripts/
-      #     poetry install
-      #     poetry run python ./pre-commit-update.py
-
-      # - name: create pull request
-      #   uses: peter-evans/create-pull-request@v5
-      #   with:
-      #     add-paths: .pre-commit-config.yaml
-      #     branch: pre-commit-dependencies-update
-      #     commit-message: "[chore] pre-commit-dependencies-update"
-      #     title: "[chore] pre-commit-dependencies-update"
+      - name: create pull request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          add-paths: .pre-commit-config.yaml
+          branch: pre-commit-dependencies-update
+          commit-message: "[chore] pre-commit-dependencies-update"
+          title: "[chore] pre-commit-dependencies-update"
