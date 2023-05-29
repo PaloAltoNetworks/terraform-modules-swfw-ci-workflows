@@ -5,6 +5,11 @@ permissions:
 
 on:
   workflow_call:
+    inputs:
+      script_ref:
+        description: Branch/TAG to download the Pre Commit dependencies update script
+        type: string
+        default: main
 
 jobs:
   update:
@@ -14,8 +19,20 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      # - name: checkout repository
-      #   uses: actions/checkout@v3
+      - name: checkout repository
+        uses: actions/checkout@v3
+
+      - name: download the python scripts
+        shell: bash
+        env:
+          FILES: ('poetry.toml' 'pre-commit-update.py' 'pyproject.toml')
+        run: |
+          mkdir -p .github/scripts/
+          cd .github/scripts/
+          for F in ${FILES[*]}; do
+            curl "https://raw.githubusercontent.com/PaloAltoNetworks/terraform-modules-vmseries-ci-workflows/${{ inputs.script_ref }}/.github/scripts/${F}"
+          done
+          ls -l
 
       # - name: install Python
       #   uses: actions/setup-python@v4
@@ -27,12 +44,11 @@ jobs:
       #   with: 
       #     poetry-version: 1.4.2
 
-      - name: run the update script
-        run: | 
-          for a in $(env); do echo $a; done
-          # cd .github/scripts/
-          # poetry install
-          # poetry run python ./pre-commit-update.py
+      # - name: run the update script
+      #   run: | 
+      #     cd .github/scripts/
+      #     poetry install
+      #     poetry run python ./pre-commit-update.py
 
       # - name: create pull request
       #   uses: peter-evans/create-pull-request@v5
