@@ -5,6 +5,9 @@ permissions:
 
 on:
   workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 1 1-7 * 1' # this means every 1st Monday of every month
 
 jobs:
   update:
