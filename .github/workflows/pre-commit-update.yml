@@ -1,0 +1,42 @@
+name: Pre-Commit update
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+
+jobs:
+  update:
+    name: "Update Pre-Commit dependencies"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v3
+
+      - name: install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: install Poetry
+        uses: Gr1N/setup-poetry@v8
+        with: 
+          poetry-version: 1.4.2
+
+      - name: run the update script
+        run: | 
+          cd .github/scripts/
+          poetry install
+          poetry run python ./pre-commit-update.py
+
+      - name: create pull request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          add-paths: .pre-commit-config.yaml
+          branch: pre-commit-dependencies-update
+          commit-message: "[chore] pre-commit-dependencies-update"
+          title: "[chore] pre-commit-dependencies-update"
