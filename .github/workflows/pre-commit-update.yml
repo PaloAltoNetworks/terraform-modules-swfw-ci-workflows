@@ -19,20 +19,24 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - name: checkout repository
-        uses: actions/checkout@v3
+      - name: try python
+        shell: python
+        run: print("ehlo")
+      # - name: checkout repository
+      #   uses: actions/checkout@v3
 
-      - name: download the python scripts
-        shell: bash
-        env:
-          FILES: ('poetry.toml' 'pre-commit-update.py' 'pyproject.toml')
-        run: |
-          mkdir -p .github/scripts/
-          cd .github/scripts/
-          for F in ${FILES[*]}; do
-            curl "https://raw.githubusercontent.com/PaloAltoNetworks/terraform-modules-vmseries-ci-workflows/${{ inputs.script_ref }}/.github/scripts/${F}"
-          done
-          ls -l
+      # - name: download the python scripts
+      #   shell: bash
+      #   env:
+      #     FILES: poetry.toml pre-commit-update.py pyproject.toml
+      #   run: |
+      #     mkdir -p .github/scripts/
+      #     cd .github/scripts/
+      #     for F in ${FILES[*]}; do
+      #       URL="https://raw.githubusercontent.com/PaloAltoNetworks/terraform-modules-vmseries-ci-workflows/${{ inputs.script_ref }}/.github/scripts/${F}"
+      #       curl -s -S -f "$URL" -o "$F"
+      #     done
+      #     ls -l
 
       # - name: install Python
       #   uses: actions/setup-python@v4
