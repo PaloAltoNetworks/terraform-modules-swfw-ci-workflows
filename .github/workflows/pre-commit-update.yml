@@ -14,30 +14,30 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - name: checkout repository
-        uses: actions/checkout@v3
+      # - name: checkout repository
+      #   uses: actions/checkout@v3
 
-      - name: install Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
+      # - name: install Python
+      #   uses: actions/setup-python@v4
+      #   with:
+      #     python-version: 3.11
 
-      - name: install Poetry
-        uses: Gr1N/setup-poetry@v8
-        with: 
-          poetry-version: 1.4.2
+      # - name: install Poetry
+      #   uses: Gr1N/setup-poetry@v8
+      #   with: 
+      #     poetry-version: 1.4.2
 
       - name: run the update script
         run: | 
-          echo GH REF ${{ github.ref_name }}
-          cd .github/scripts/
-          poetry install
-          poetry run python ./pre-commit-update.py
+          for a in $(env); do echo $a; done
+          # cd .github/scripts/
+          # poetry install
+          # poetry run python ./pre-commit-update.py
 
-      - name: create pull request
-        uses: peter-evans/create-pull-request@v5
-        with:
-          add-paths: .pre-commit-config.yaml
-          branch: pre-commit-dependencies-update
-          commit-message: "[chore] pre-commit-dependencies-update"
-          title: "[chore] pre-commit-dependencies-update"
+      # - name: create pull request
+      #   uses: peter-evans/create-pull-request@v5
+      #   with:
+      #     add-paths: .pre-commit-config.yaml
+      #     branch: pre-commit-dependencies-update
+      #     commit-message: "[chore] pre-commit-dependencies-update"
+      #     title: "[chore] pre-commit-dependencies-update"
