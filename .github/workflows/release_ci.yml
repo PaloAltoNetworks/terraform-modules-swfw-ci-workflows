@@ -10,7 +10,7 @@ on:
         description: When set to true runs also apply
         type: boolean
         default: false
-      indepotency:
+      idempotence:
         description: When set to true runs plan to on already applied configuration
         type: boolean
         default: true
@@ -86,7 +86,6 @@ jobs:
           echo "modules=$(echo $(ls -d1 examples/* modules/*) | tr ' ' ',')" >> $GITHUB_OUTPUT
           echo "examples=$(echo $(ls -d1 examples/*) | tr ' ' ',')" >> $GITHUB_OUTPUT
 
-
   validate:
     name: validate terraform code
     needs: [tf_prereqs]
@@ -95,6 +94,27 @@ jobs:
     with:
       tf_version: ${{ inputs.tf_version }}
       paths: ${{ needs.tf_prereqs.outputs.modules }}
+      max_parallel: ${{ inputs.max_parallel }}
+
+
+  plan_apply:
+    name: run plan and/or apply on examples
+    needs: 
+      - validate
+      - tf_prereqs
+    if: ${{ needs.tf_prereqs.outputs.examples != '' }}
+    uses: ./.github/workflows/_tf_plan_apply.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      cloud: ${{ inputs.cloud }}
+      tf_version: ${{ inputs.tf_version }}
+      paths: ${{ needs.tf_prereqs.outputs.examples }}
+      do_apply: ${{ inputs.do_apply }}
+      idempotence: ${{ inputs.idempotence }}
+      max_parallel: ${{ inputs.max_parallel }}
+    secrets: inherit
 
 
   release:
@@ -102,6 +122,7 @@ jobs:
     needs: 
       - validate
       - pre_commit
+      - plan_apply
     runs-on: ubuntu-latest
     permissions:
       contents: write

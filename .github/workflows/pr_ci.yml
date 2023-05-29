@@ -2,6 +2,8 @@ name: (sub) PR CI
 
 permissions:
   contents: read
+  id-token: write
+
 
 on:
   workflow_call:
@@ -10,7 +12,7 @@ on:
         description: When set to true runs also apply
         type: boolean
         default: false
-      indepotency:
+      idempotence:
         description: When set to true runs plan to on already applied configuration
         type: boolean
         default: true
@@ -37,8 +39,8 @@ jobs:
     name: terraform modules discovery
     runs-on: ubuntu-latest
     outputs:
-      validate_paths: ${{ steps.format.outputs.dir_diff }}
-      plan_paths: ${{ steps.deps.outputs.examples }}
+      validate_paths: ${{ steps.format.outputs.validate_diff }}
+      plan_paths: ${{ steps.format.outputs.apply_diff }}
       changed_files: ${{ steps.format.outputs.files_diff }}
     steps:
       - name: checkout code
@@ -46,40 +48,93 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: get diff with base branch
-        id: diff
+      - name: get diff with base branch, modules
+        id: diff_modules
         uses: tj-actions/changed-files@v35
         with:
           separator: "@"
-          files: |
-            modules/**/*.tf
-            examples/**/*.tf
+          files: modules/**/*.tf
 
-      - name: extract only changed folders
+      - name: get diff with base branch, examples
+        id: diff_examples
+        uses: tj-actions/changed-files@v35
+        with:
+          separator: "@"
+          files: examples/**/*.tf
+
+      - name: get diff with base branch, examples, varfiles
+        id: diff_tfvars
+        uses: tj-actions/changed-files@v35
+        with:
+          separator: "@"
+          files: examples/**/*.tfvars
+
+      - name: extract paths for tasks
         id: format
         env:
-          DIFFS: ${{ steps.diff.outputs.all_changed_files }}
+          DIFF_MODULES: ${{ steps.diff_modules.outputs.all_changed_files }}
+          DIFF_EXAMPLES: ${{ steps.diff_examples.outputs.all_changed_files }}
+          DIFF_TFVARS: ${{ steps.diff_tfvars.outputs.all_changed_files }}
         shell: bash
         run: |
-          echo "dir_diff=$(echo -n "$DIFFS" | tr -d '\n' | tr '@' '\n' | sed -E "s/^(modules|examples)\/(.+)\/.*$/\1\/\2/" | sort -u | tr '\n' ',' | rev | cut -c2- | rev)" >> $GITHUB_OUTPUT
-          echo "files_diff=$(echo "$DIFFS" | tr '@' ' ')" >> $GITHUB_OUTPUT
+          DIFF_MODULES_ARRAY=(${DIFF_MODULES//@/ })
+          DIFF_EXAMPLES_ARRAY=(${DIFF_EXAMPLES//@/ })
+          DIFF_TFVARS_ARRAY=(${DIFF_TFVARS//@/ })
 
-      - name: discover module->example dependencies
-        id: deps
-        env:
-          DIFFS: ${{ steps.format.outputs.dir_diff }}
-        shell: bash
-        run: |
-          if [ "$DIFFS" ]; then
-            EXAMPLES_DISCOVERY=$(for M in $(echo "$DIFFS" | tr '@' '\n' | grep modules); do
-              echo $(grep -rl "$M" examples/*/*.tf | sed -E "s/^(examples\/.*)\/.*$/\1/g")
-            done | sort -u | awk NF)
 
-            if [ "$(echo "$(echo $EXAMPLES_DISCOVERY | tr ' ' ','),$DIFFS" | grep examples)" ]; then
-              EXAMPLES_COMBINED=$(echo "$(echo $EXAMPLES_DISCOVERY | tr ' ' ','),$DIFFS" | tr ',' '\n' | awk NF | grep examples | sort -u)
-              echo "examples=$(echo -n $EXAMPLES_COMBINED | tr ' ' ',')" >> $GITHUB_OUTPUT
-            fi
-          fi
+          # extract folder names from DIFFS
+          DIRS_MODULES=()
+          for ELEMENT in ${DIFF_MODULES_ARRAY[*]}; do
+            DIRS_MODULES+=($(echo $ELEMENT | sed -E "s/^(modules)\/(.+)\/.*$/\1\/\2/" ))
+          done
+          # deduplicate paths
+          IFS=$'\n' DIRS_MODULES_DEDUP=($(sort -u <<< "${DIRS_MODULES[*]}"))
+          unset IFS
+
+
+          DIRS_EXAMPLES=()
+          for ELEMENT in ${DIFF_EXAMPLES_ARRAY[*]}; do
+            DIRS_EXAMPLES+=($(echo $ELEMENT | sed -E "s/^(examples)\/(.+)\/.*$/\1\/\2/" ))
+          done
+          # deduplicate paths
+          IFS=$'\n' DIRS_EXAMPLES_DEDUP=($(sort -u <<< "${DIRS_EXAMPLES[*]}"))
+          unset IFS
+
+
+          DIRS_TFVARS=()
+          for ELEMENT in ${DIFF_TFVARS_ARRAY[*]}; do
+            DIRS_TFVARS+=($(echo $ELEMENT | sed -E "s/^(examples)\/(.+)\/.*$/\1\/\2/" ))
+          done
+          # deduplicate paths
+          IFS=$'\n' DIRS_TFVARS_DEDUP=($(sort -u <<< "${DIRS_TFVARS[*]}"))
+          unset IFS
+
+
+          # use these paths to discover dependencies - find examples using modules from the list
+          EXAMPLES_DISCOVERED=()
+          for ELEMENT in ${DIRS_MODULES_DEDUP[*]}; do
+            EXAMPLES_DISCOVERED+=($(echo $(grep -rl "$ELEMENT" examples/*/main.tf | sed -E "s/^(examples\/.*)\/.*$/\1/g")))
+          done
+          # deduplicate list of example paths
+          IFS=$'\n' EXAMPLES_DISCOVERED_DEDUP=($(sort -u <<<  "${EXAMPLES_DISCOVERED[*]}"))
+          unset IFS
+
+
+          DIRS_VALIDATE=(${DIRS_MODULES_DEDUP[*]} ${DIRS_EXAMPLES_DEDUP[*]})
+          FILES_PRECOMMIT=(${DIFF_MODULES_ARRAY[*]} ${DIFF_EXAMPLES_ARRAY[*]} ${DIFF_TFVARS_ARRAY[*]})
+          DIRS_APPLY=(${DIRS_EXAMPLES_DEDUP[*]} ${EXAMPLES_DISCOVERED_DEDUP[*]} ${DIRS_TFVARS_DEDUP[*]})
+          IFS=$'\n' DIRS_APPLY_DEDUP=($(sort -u <<<  "${DIRS_APPLY[*]}"))
+          unset IFS
+
+          VALIDATE_DIFF=$(echo ${DIRS_VALIDATE[*]} | tr ' ' ',')
+          APPLY_DIFF=$(echo ${DIRS_APPLY_DEDUP[*]} | tr ' ' ',')
+
+          # a list of chagned paths, used for validation tasks
+          echo "validate_diff=$VALIDATE_DIFF" >> $GITHUB_OUTPUT
+          # a list of affected and changed examples, used for plan/apply tasks
+          echo "apply_diff=$APPLY_DIFF" >> $GITHUB_OUTPUT
+          # a list of changed files, used for pre-commit tasks
+          echo "files_diff=${FILES_PRECOMMIT[*]}" >> $GITHUB_OUTPUT
 
 
   pre_commit:
@@ -100,6 +155,27 @@ jobs:
     with:
       tf_version: ${{ inputs.tf_version }}
       paths: ${{ needs.tf_prereqs.outputs.validate_paths }}
+      max_parallel: ${{ inputs.max_parallel }}
+
+
+  plan_apply:
+    name: run plan changed examples and dependencies
+    needs: 
+      - validate
+      - tf_prereqs
+    if: ${{ needs.tf_prereqs.outputs.plan_paths != '' }}
+    uses: ./.github/workflows/_tf_plan_apply.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      cloud: ${{ inputs.cloud }}
+      tf_version: ${{ inputs.tf_version }}
+      paths: ${{ needs.tf_prereqs.outputs.plan_paths }}
+      do_apply: ${{ inputs.do_apply }}
+      idempotence: ${{ inputs.idempotence }}
+      max_parallel: ${{ inputs.max_parallel }}
+    secrets: inherit
 
 
   branch_protection_junction:
@@ -107,6 +183,7 @@ jobs:
     needs:
       - validate
       - pre_commit
+      - plan_apply
     if: always()
     permissions:
       actions: read
