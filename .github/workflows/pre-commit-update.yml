@@ -29,6 +29,7 @@ jobs:
 
       - name: run the update script
         run: | 
+          echo GH REF ${{ github.ref_name }}
           cd .github/scripts/
           poetry install
           poetry run python ./pre-commit-update.py
