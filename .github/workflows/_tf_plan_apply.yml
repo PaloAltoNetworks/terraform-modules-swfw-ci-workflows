@@ -22,7 +22,7 @@ on:
         description: When set to true runs also apply
         type: boolean
         default: false
-      indepotency:
+      idempotence:
         description: When set to true runs plan to on already applied configuration
         type: boolean
         default: true
@@ -34,24 +34,43 @@ on:
         description: "Decide against which public cloud the code will be run. Possible values: azure, aws, gcp"
         type: string
         required: true
+      apply_timeout:
+        description: Maximum time to run the Terraform apply step
+        type: number
+        default: 30
 
 jobs:
+
   prerequisites:
     name: prep data for matrix strategy
     runs-on: ubuntu-latest
     outputs:
       paths: ${{ steps.preqs.outputs.paths }}
       tf_versions: ${{ steps.preqs.outputs.tf_versions }}
+    env:
+      PATHS: ${{ inputs.paths }}
+      TFVER: ${{ inputs.tf_version }}
     steps:
       - name: set outputs
         id: preqs
         run: |
-          echo "paths=$(echo -n "${{ inputs.paths }}" | jq -R -s -c 'split(",")')" >> $GITHUB_OUTPUT
-          echo "tf_versions=$(echo "${{ inputs.tf_version }} " | jq -R -s -c 'split(" ")[:-1]')" >> $GITHUB_OUTPUT
+          echo paths $PATHS
+          echo tf versions $TFVER
+
+          echo
+          echo paths formatted as JSON
+          echo -n "$PATHS" | jq -R -s -c 'split(",")'
+
+          echo
+          echo tf versions formatted as JSON
+          echo "$TFVER " | jq -R -s -c 'split(" ")[:-1]'
+
+          echo "paths=$(echo -n "$PATHS" | jq -R -s -c 'split(",")')" >> $GITHUB_OUTPUT
+          echo "tf_versions=$(echo "$TFVER " | jq -R -s -c 'split(" ")[:-1]')" >> $GITHUB_OUTPUT
         
   terraform:
     needs: [prerequisites]
-    name: '${{ matrix.path }}@${{ matrix.tf_version }}'
+    name: 'plan/apply ${{ matrix.path }}@${{ matrix.tf_version }}'
     permissions:
       contents: read
       id-token: write
@@ -62,11 +81,13 @@ jobs:
         tf_version: ${{ fromJson(needs.prerequisites.outputs.tf_versions) }}
         path: ${{ fromJson(needs.prerequisites.outputs.paths) }}
     steps:
+
       - name: checkout code
         uses: actions/checkout@v3
 
-      - name: run plan/apply on Azure
+      - name: run plan/apply on Azure for ${{ matrix.path }}
         if: inputs.cloud == 'azure'
+        timeout-minutes: ${{ inputs.apply_timeout }}
         uses: ./.github/actions/plan_apply
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -75,12 +96,42 @@ jobs:
         with:
           tf_version: ${{ matrix.tf_version }}
           path: ${{ matrix.path }}
-          do_apply: true
+          do_apply: ${{ inputs.do_apply }}
+          idempotence: ${{ inputs.idempotence }}
 
       - name: run plan/apply on AWS
         if: inputs.cloud == 'aws'
         run: echo AWS placeholder
 
       - name: run plan/apply on GCP
+        if: inputs.cloud == 'gcp'
+        run: echo GCP placeholder
+
+  cleanup:
+    needs: [terraform]
+    name: cleanup infrastructure in case of CI failure
+    if: cancelled() || failure()
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: checkout code
+        uses: actions/checkout@v3
+
+      - name: cleanup Azure Subscription
+        if: inputs.cloud == 'azure'
+        uses: ./.github/actions/sub_cleanup
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+      - name: cleanup AWS
+        if: inputs.cloud == 'aws'
+        run: echo AWS placeholder
+
+      - name: cleanup GCP
         if: inputs.cloud == 'gcp'
         run: echo GCP placeholder
