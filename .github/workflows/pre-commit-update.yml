@@ -59,6 +59,27 @@ jobs:
           with open(pre_commit_config_path, 'w') as pre_commit:
               yaml.dump(pre_commit_config, pre_commit, default_flow_style=False)
 
+      - name: install pre-commit dependencies
+        if: github.event_name != 'workflow_call'
+        working-directory: /tmp
+        run: |
+          curl -sL https://github.com/terraform-docs/terraform-docs/releases/download/v0.16.0/terraform-docs-v0.16.0-linux-amd64.tar.gz > terraform-docs.tar.gz 
+          tar zxf terraform-docs.tar.gz
+          mv terraform-docs /usr/local/bin/
+          terraform-docs --version
+
+          curl -sL https://github.com/terraform-linters/tflint/releases/download/v0.46.0/tflint_linux_amd64.zip > tflint.zip
+          unzip tflint.zip
+          mv tflint /usr/local/bin/
+          tflint --version
+
+      - name: run pre-commit with updated config
+        if: github.event_name != 'workflow_call'
+        shell: bash
+        run: | 
+          python -m pip install pre-commit==3.3
+          pre-commit run -a
+
       - name: create pull request
         uses: peter-evans/create-pull-request@v5
         with:
