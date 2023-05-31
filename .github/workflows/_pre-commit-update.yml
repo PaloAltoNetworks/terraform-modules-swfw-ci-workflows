@@ -5,6 +5,13 @@ permissions:
 
 on:
   workflow_call:
+    outputs:
+      pr_number:
+        description: A PR number if one is created or updated
+        value: ${{ jobs.update.outputs.pr_number }}
+      pr_operation:
+        description: 'An operation taken on a PR, either: created, updated, closed, or null string in case no operation was made'
+        value: ${{ jobs.update.outputs.pr_operation }}
 
 jobs:
   update:
@@ -13,6 +20,9 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    outputs:
+      pr_number: ${{ steps.pr.outputs.pull-request-number }}
+      pr_operation: ${{ steps.pr.outputs.pull-request-operation }}
     steps:
       - name: checkout repository
         uses: actions/checkout@v3
@@ -57,9 +67,11 @@ jobs:
               yaml.dump(pre_commit_config, pre_commit, default_flow_style=False)
 
       - name: create pull request
+        id: pr
         uses: peter-evans/create-pull-request@v5
         with:
           add-paths: .pre-commit-config.yaml
           branch: pre-commit-dependencies-update
           commit-message: "[chore] pre-commit-dependencies-update"
           title: "[chore] pre-commit-dependencies-update"
+          delete-branch: true
