@@ -19,6 +19,11 @@ on:
         type: string
         default: "all-files"
         required: false
+      checkout-branch:
+        # description: 
+        type: string
+        default: null
+        required: false
 env:
   REQUIREMENTS: >
     appdirs==1.4.4
@@ -64,7 +69,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout code
+        if: inputs.checkout-branch == 'null'
         uses: actions/checkout@v3
+
+      - name: checkout code from branch ${{ inputs.checkout-branch }}
+        if: inputs.checkout-branch != 'null'
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.checkout-branch }}
 
       - name: set up Python
         uses: actions/setup-python@v4
