@@ -1,0 +1,61 @@
+name: Comment a PR
+
+permissions:
+  contents: read
+  pull-requests: write
+
+on: 
+  workflow_call:
+    inputs:
+      pr_number:
+        description: A PR number to update
+        type: string
+        required: true
+      job_result:
+        description: A job result either 'failure' or 'success' to provide a proper comment
+        type: string
+        required: true
+      
+jobs:
+  comment-pr:
+    name: Give comment on a PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: find if we have a comment
+        uses: peter-evans/find-comment@v2
+        id: find
+        with:
+          issue-number: ${{ inputs.pr_number }}
+          body-includes: The Pre Commit test run
+
+      - name: set the comment information
+        id: comment
+        run: |
+          if [ ${{ inputs.job_result }} == "failure" ]; then
+            echo "body=:no_entry: :skull_and_crossbones: :x: The Pre Commit test run **failed**. See results [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})." >> $GITHUB_OUTPUT
+            echo "reaction=-1" >> $GITHUB_OUTPUT
+          else
+            echo "body=:+1: :rocket: :smile: The Pre Commit test run **succeded**. See results [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})." >> $GITHUB_OUTPUT
+            echo "reaction=+1" >> $GITHUB_OUTPUT
+          fi
+
+      - name: create comment
+        if: steps.find.outputs.comment-id == ''
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          issue-number: ${{ inputs.pr_number }}
+          body: ${{ steps.comment.outputs.body }}
+          edit-mode: append
+          reactions: ${{ steps.comment.outputs.reaction }}
+          reactions-edit-mode: replace
+
+      - name: update comment
+        if: steps.find.outputs.comment-id != ''
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          comment-id: ${{ steps.find.outputs.comment-id }}
+          issue-number: ${{ inputs.pr_number }}
+          body: ${{ steps.comment.outputs.body }}
+          edit-mode: append
+          reactions: ${{ steps.comment.outputs.reaction }}
+          reactions-edit-mode: replace
