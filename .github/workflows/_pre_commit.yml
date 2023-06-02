@@ -24,26 +24,29 @@ on:
         type: string
         default: null
         required: false
-env:
-  REQUIREMENTS: >
-    appdirs==1.4.4
-    cfgv==3.2.0
-    click==7.1.2
-    distlib==0.3.1
-    filelock==3.0.12
-    identify==2.2.4
-    importlib-metadata==4.0.1
-    importlib-resources==5.1.2
-    nodeenv==1.6.0
-    pep517==0.10.0
-    pip-tools==6.1.0
-    pre-commit==2.7.1
-    pyyaml==5.4.1
-    six==1.16.0
-    toml==0.10.2
-    typing-extensions==3.10.0.0
-    virtualenv==20.4.6
-    zipp==3.4.1
+# env:
+#   REQUIREMENTS: >
+#     "pre-commit>=3"
+
+
+#     appdirs==1.4.4
+#     cfgv==3.2.0
+#     click==7.1.2
+#     distlib==0.3.1
+#     filelock==3.0.12
+#     identify==2.2.4
+#     importlib-metadata==4.0.1
+#     importlib-resources==5.1.2
+#     nodeenv==1.6.0
+#     pep517==0.10.0
+#     pip-tools==6.1.0
+#     pre-commit==2.7.1
+#     pyyaml==5.4.1
+#     six==1.16.0
+#     toml==0.10.2
+#     typing-extensions==3.10.0.0
+#     virtualenv==20.4.6
+#     zipp==3.4.1
 
 jobs:
 
@@ -81,14 +84,11 @@ jobs:
       - name: set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
-
-      - name: prep a working dir
-        run: mkdir tmp
+          python-version: '3.11'
 
       - name: install TF Docs
         if: ${{ matrix.pre_commit_hook == 'terraform_docs' }}
-        working-directory: tmp
+        working-directory: /tmp
         run: |
           curl -sL https://github.com/terraform-docs/terraform-docs/releases/download/v0.16.0/terraform-docs-v0.16.0-linux-amd64.tar.gz > terraform-docs.tar.gz 
           tar zxf terraform-docs.tar.gz
@@ -97,15 +97,15 @@ jobs:
 
       - name: install TF Lint
         if: ${{ matrix.pre_commit_hook == 'terraform_tflint' }}
-        working-directory: tmp
+        working-directory: /tmp
         run: |
           curl -sL https://github.com/terraform-linters/tflint/releases/download/v0.46.0/tflint_linux_amd64.zip > tflint.zip
           unzip tflint.zip
           mv tflint /usr/local/bin/
           tflint --version
 
-      - name: install python requirements
-        run: python3 -m pip install $REQUIREMENTS
+      - name: install pre-commit
+        run: python3 -m pip install "pre-commit>=3"
 
       - name: run pre-commit terraform_fmt
         shell: bash
@@ -113,7 +113,6 @@ jobs:
         env:
           INPUT_FILES: ${{ inputs.pre-commit-files }}
         run: |
-          rm -rf tmp
           if grep -q "all-files" <<< "$INPUT_FILES"; then
             pre-commit run ${{ matrix.pre_commit_hook }} -a
           else
@@ -126,7 +125,6 @@ jobs:
         env:
           INPUT_FILES: ${{ inputs.pre-commit-files }}
         run: |
-          rm -rf tmp
           if grep -q "all-files" <<< "$INPUT_FILES"; then
             pre-commit run ${{ matrix.pre_commit_hook }} -a
           else
@@ -139,7 +137,6 @@ jobs:
         env:
           INPUT_FILES: ${{ inputs.pre-commit-files }}
         run: |
-          rm -rf tmp
           if grep -q "all-files" <<< "$INPUT_FILES"; then
             pre-commit run ${{ matrix.pre_commit_hook }} -a
           else
@@ -150,5 +147,4 @@ jobs:
         shell: bash
         if: ${{ contains(matrix.pre_commit_hook, 'checkov') }}
         run: |
-          rm -rf tmp
           pre-commit run checkov -a
