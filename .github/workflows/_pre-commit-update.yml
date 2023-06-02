@@ -5,6 +5,11 @@ permissions:
 
 on:
   workflow_call:
+    inputs:
+      update_branch:
+        description: Name of a branch that will be used to introduce changes
+        type: string
+        default: pre-commit-dependencies-update
     outputs:
       pr_number:
         description: A PR number if one is created or updated
@@ -83,9 +88,9 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           add-paths: .pre-commit-config.yaml
-          branch: pre-commit-dependencies-update
+          branch: ${{ inputs.update_branch }}
           commit-message: "[chore] pre-commit-dependencies-update"
-          title: "[chore] pre-commit-dependencies-update"
+          title: "[chore] Pre-Commit dependencies update"
           delete-branch: true
           body: |
             # Pre-Commit Dependencies updates required
