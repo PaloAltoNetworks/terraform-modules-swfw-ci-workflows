@@ -37,11 +37,14 @@ jobs:
         run: python -m pip install pyyaml==6.0 requests==2.31
 
       - name: run the update script
+        id: update
         shell: python
         run: | 
-          from os import environ
+          import os
           import yaml
           import requests
+          from urllib.parse import urlparse
+          
 
           pre_commit_config_path = "./.pre-commit-config.yaml"
 
@@ -52,6 +55,8 @@ jobs:
                   print(exc)
                   exit(1)
           
+          updates = dict()
+
           for repo in pre_commit_config['repos']:
               repo_url = repo['repo'].replace('.git','') if '.git' in repo['repo'] else repo['repo']
               release = repo['rev']
@@ -62,9 +67,16 @@ jobs:
                   if release != latest_release:
                       print(f'{repo_url} needs to be updated to {latest_release}, currently at {release}')
                       repo['rev'] = latest_release
+                      updates[urlparse(repo_url).path[1:]] = {'current': release, 'latest': latest_release}
               
           with open(pre_commit_config_path, 'w') as pre_commit:
               yaml.dump(pre_commit_config, pre_commit, default_flow_style=False)
+
+          if updates:
+            print(updates)
+            updated_repos = ' '.join([ f"<li>{k}: {v['current']} -> {v['latest']}</li>" for k,v in updates.items()])
+            with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write(f"updated_repos={updated_repos}")
 
       - name: create pull request
         id: pr
@@ -75,3 +87,15 @@ jobs:
           commit-message: "[chore] pre-commit-dependencies-update"
           title: "[chore] pre-commit-dependencies-update"
           delete-branch: true
+          body: |
+            # Pre-Commit Dependencies updates required
+
+            There are pre-commit dependencies waiting to be updated:
+
+            <ul>
+            ${{ steps.update.outputs.updated_repos }}
+            </ul>
+
+            Please check results of `pre-commit` test run with these updates in comments below.
+
+            <sup>*Generated automatically with GitHub Actions*</sup>
