@@ -24,29 +24,6 @@ on:
         type: string
         default: null
         required: false
-# env:
-#   REQUIREMENTS: >
-#     "pre-commit>=3"
-
-
-#     appdirs==1.4.4
-#     cfgv==3.2.0
-#     click==7.1.2
-#     distlib==0.3.1
-#     filelock==3.0.12
-#     identify==2.2.4
-#     importlib-metadata==4.0.1
-#     importlib-resources==5.1.2
-#     nodeenv==1.6.0
-#     pep517==0.10.0
-#     pip-tools==6.1.0
-#     pre-commit==2.7.1
-#     pyyaml==5.4.1
-#     six==1.16.0
-#     toml==0.10.2
-#     typing-extensions==3.10.0.0
-#     virtualenv==20.4.6
-#     zipp==3.4.1
 
 jobs:
 
