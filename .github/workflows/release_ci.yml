@@ -10,10 +10,13 @@ on:
         description: When set to true runs also apply
         type: boolean
         default: false
+<<<<<<< HEAD
       do_terratest:
         description: When set to true runs also Terratest
         type: boolean
         default: false
+=======
+>>>>>>> main
       idempotence:
         description: When set to true runs plan to on already applied configuration
         type: boolean
@@ -98,7 +101,10 @@ jobs:
         run: |
           echo "modules=$(echo $(ls -d1 examples/* modules/*) | tr ' ' ',')" >> $GITHUB_OUTPUT
           echo "examples=$(echo $(ls -d1 examples/*) | tr ' ' ',')" >> $GITHUB_OUTPUT
+<<<<<<< HEAD
           echo "terratest_paths=$(echo $(ls -d1 tests/*/) | tr ' ' ',')" >> $GITHUB_OUTPUT
+=======
+>>>>>>> main
 
   validate:
     name: validate terraform code
@@ -111,6 +117,7 @@ jobs:
       max_parallel: ${{ inputs.max_parallel }}
 
 
+<<<<<<< HEAD
   terratest:
     name: run Terratest for changed tests, modules and dependencies
     needs:
@@ -135,6 +142,11 @@ jobs:
   plan_apply:
     name: run plan and/or apply on examples
     needs:
+=======
+  plan_apply:
+    name: run plan and/or apply on examples
+    needs: 
+>>>>>>> main
       - validate
       - tf_prereqs
     if: ${{ needs.tf_prereqs.outputs.examples != '' }}
@@ -147,9 +159,13 @@ jobs:
       tf_version: ${{ inputs.tf_version }}
       paths: ${{ needs.tf_prereqs.outputs.examples }}
       do_apply: ${{ inputs.do_apply }}
+<<<<<<< HEAD
       apply_timeout: ${{ inputs.apply_timeout }}
       idempotence: ${{ inputs.idempotence }}
       fail_fast: ${{ inputs.fail_fast }}
+=======
+      idempotence: ${{ inputs.idempotence }}
+>>>>>>> main
       max_parallel: ${{ inputs.max_parallel }}
     secrets: inherit
 
@@ -159,7 +175,10 @@ jobs:
     needs:
       - validate
       - pre_commit
+<<<<<<< HEAD
       - terratest
+=======
+>>>>>>> main
       - plan_apply
     runs-on: ubuntu-latest
     if: always() && !contains(needs.terratest.result, 'failure') && contains(needs.plan_apply.result, 'success')
