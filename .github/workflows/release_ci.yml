@@ -14,10 +14,18 @@ on:
         description: When set to true runs plan to on already applied configuration
         type: boolean
         default: true
+      fail_fast:
+        description: When set to true, GitHub will cancel all in-progress and queued jobs in the matrix if any job in the matrix fails.
+        type: boolean
+        default: true
       max_parallel:
         description: Maximum parallel jobs in matrix strategy
         type: number
         default: 10
+      apply_timeout:
+        description: Maximum time to run the Terraform apply step
+        type: number
+        default: 30
       tf_version:
         description: A space delimited list of TF versions used to run the code with
         type: string
@@ -99,7 +107,7 @@ jobs:
 
   plan_apply:
     name: run plan and/or apply on examples
-    needs: 
+    needs:
       - validate
       - tf_prereqs
     if: ${{ needs.tf_prereqs.outputs.examples != '' }}
@@ -113,13 +121,15 @@ jobs:
       paths: ${{ needs.tf_prereqs.outputs.examples }}
       do_apply: ${{ inputs.do_apply }}
       idempotence: ${{ inputs.idempotence }}
+      fail_fast: ${{ inputs.fail_fast }}
       max_parallel: ${{ inputs.max_parallel }}
+      apply_timeout: ${{ inputs.apply_timeout }}
     secrets: inherit
 
 
   release:
     name: release sem version
-    needs: 
+    needs:
       - validate
       - pre_commit
       - plan_apply
