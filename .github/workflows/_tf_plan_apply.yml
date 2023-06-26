@@ -42,6 +42,10 @@ on:
         description: Maximum time to run the Terraform apply step
         type: number
         default: 30
+      branch:
+        description: Branch on which the tests shoul run
+        type: string
+        default: main
 
 jobs:
 
@@ -89,6 +93,8 @@ jobs:
 
       - name: checkout code
         uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.branch }}
 
       - name: run plan/apply on Azure for ${{ matrix.path }}
         if: inputs.cloud == 'azure'
