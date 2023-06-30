@@ -1,11 +1,10 @@
 repos:
-  - repo: https://github.com/bridgecrewio/checkov.git
-    rev: '2.2.125'
-    hooks:
-    - id: checkov
-      verbose: true
-      files: '^\.github/workflows/.*\.yml$'
-      args: [
-        --compact,
-        --quiet,
-      ]
+- hooks:
+  - args:
+    - --compact
+    - --quiet
+    files: ^\.github/workflows/.*\.yml$
+    id: checkov
+    verbose: true
+  repo: https://github.com/bridgecrewio/checkov.git
+  rev: 2.3.302
