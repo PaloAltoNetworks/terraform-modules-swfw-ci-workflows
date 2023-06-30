@@ -12,10 +12,6 @@ on:
         description: When set to true runs also apply
         type: boolean
         default: false
-      idempotence:
-        description: When set to true runs plan to on already applied configuration
-        type: boolean
-        default: true
       fail_fast:
         description: When set to true, GitHub will cancel all in-progress and queued jobs in the matrix if any job in the matrix fails.
         type: boolean
@@ -147,7 +143,7 @@ jobs:
 
   pre_commit:
     name: Pre-Commit
-    needs: [tf_prereqs]
+    needs: tf_prereqs
     if: ${{ needs.tf_prereqs.outputs.changed_files != '' }}
     uses: ./.github/workflows/_pre_commit.yml
     with:
@@ -157,7 +153,7 @@ jobs:
 
   validate:
     name: validate all changed modules
-    needs: [tf_prereqs]
+    needs: tf_prereqs
     if: ${{ needs.tf_prereqs.outputs.validate_paths != '' }}
     uses: ./.github/workflows/_tf_validate.yml
     with:
@@ -166,13 +162,14 @@ jobs:
       max_parallel: ${{ inputs.max_parallel }}
 
 
-  plan_apply:
+  test:
     name: run plan changed examples and dependencies
     needs:
+      - pre_commit
       - validate
       - tf_prereqs
     if: ${{ needs.tf_prereqs.outputs.plan_paths != '' }}
-    uses: ./.github/workflows/_tf_plan_apply.yml
+    uses: ./.github/workflows/_tf_test.yml
     permissions:
       contents: read
       id-token: write
@@ -181,7 +178,6 @@ jobs:
       tf_version: ${{ inputs.tf_version }}
       paths: ${{ needs.tf_prereqs.outputs.plan_paths }}
       do_apply: ${{ inputs.do_apply }}
-      idempotence: ${{ inputs.idempotence }}
       fail_fast: ${{ inputs.fail_fast }}
       max_parallel: ${{ inputs.max_parallel }}
       apply_timeout: ${{ inputs.apply_timeout }}
@@ -193,7 +189,7 @@ jobs:
     needs:
       - validate
       - pre_commit
-      - plan_apply
+      - test
     if: always()
     permissions:
       actions: read
