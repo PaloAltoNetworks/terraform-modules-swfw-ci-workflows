@@ -1,4 +1,4 @@
-name: Pre-Commit update
+name: (sub) Pre-Commit update
 
 permissions:
   contents: read
