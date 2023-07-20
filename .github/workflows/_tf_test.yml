@@ -22,10 +22,6 @@ on:
         description: When set to true runs also apply
         type: boolean
         default: false
-      idempotence:
-        description: When set to true runs plan to on already applied configuration
-        type: boolean
-        default: true
       fail_fast:
         description: When set to true, GitHub will cancel all in-progress and queued jobs in the matrix if any job in the matrix fails.
         type: boolean
@@ -45,7 +41,6 @@ on:
       branch:
         description: Branch on which the tests shoul run
         type: string
-        # default: main
 
 jobs:
 
@@ -77,7 +72,7 @@ jobs:
           echo "tf_versions=$(echo "$TFVER " | jq -R -s -c 'split(" ")[:-1]')" >> $GITHUB_OUTPUT
 
   terraform:
-    needs: [prerequisites]
+    needs: prerequisites
     name: 'plan/apply ${{ matrix.path }}@${{ matrix.tf_version }}'
     permissions:
       contents: read
@@ -99,7 +94,7 @@ jobs:
       - name: run plan/apply on Azure for ${{ matrix.path }}
         if: inputs.cloud == 'azure'
         timeout-minutes: ${{ inputs.apply_timeout }}
-        uses: ./.github/actions/plan_apply
+        uses: ./.github/actions/terratest
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
@@ -108,7 +103,6 @@ jobs:
           tf_version: ${{ matrix.tf_version }}
           path: ${{ matrix.path }}
           do_apply: ${{ inputs.do_apply }}
-          idempotence: ${{ inputs.idempotence }}
 
       - name: run plan/apply on AWS
         if: inputs.cloud == 'aws'
@@ -121,7 +115,6 @@ jobs:
           tf_version: ${{ matrix.tf_version }}
           path: ${{ matrix.path }}
           do_apply: ${{ inputs.do_apply }}
-          idempotence: ${{ inputs.idempotence }}
 
       - name: run plan/apply on GCP
         if: inputs.cloud == 'gcp'
