@@ -56,6 +56,4 @@ jobs:
           terraform_version: ${{ matrix.tf_version }}
 
       - name: run validation for ${{ matrix.path }}
-        run: |
-          cd "$GITHUB_WORKSPACE"/${{ matrix.path }}
-          make validate
+        run: make ${{ matrix.path }} ACTION=Validate
