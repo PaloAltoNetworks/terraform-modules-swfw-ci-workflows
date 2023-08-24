@@ -18,10 +18,9 @@ on:
         description: Path to module that will be tested, a space delimited list of relative paths
         type: string
         required: true
-      do_apply:
-        description: When set to true runs also apply
-        type: boolean
-        default: false
+      terratest_action:
+        description: The action (name of a test in Terratest) that will be passed to the Makefile's ACTION parameter
+        type: string
       fail_fast:
         description: When set to true, GitHub will cancel all in-progress and queued jobs in the matrix if any job in the matrix fails.
         type: boolean
@@ -39,7 +38,7 @@ on:
         type: number
         default: 30
       branch:
-        description: Branch on which the tests shoul run
+        description: Branch on which the tests should run
         type: string
 
 jobs:
@@ -102,7 +101,7 @@ jobs:
         with:
           tf_version: ${{ matrix.tf_version }}
           path: ${{ matrix.path }}
-          do_apply: ${{ inputs.do_apply }}
+          terratest_action: ${{ inputs.terratest_action }}
 
       - name: run plan/apply on AWS
         if: inputs.cloud == 'aws'
