@@ -6,10 +6,9 @@ permissions:
 on:
   workflow_call:
     inputs:
-      do_apply:
-        description: When set to true runs also apply
-        type: boolean
-        default: false
+      terratest_action:
+        description: The action (name of a test in Terratest) that will be passed to the Makefile's ACTION parameter
+        type: string
       fail_fast:
         description: When set to true, GitHub will cancel all in-progress and queued jobs in the matrix if any job in the matrix fails.
         type: boolean
@@ -32,41 +31,41 @@ on:
         required: true
 
 jobs:
-  release-prereqs:
-    name: Verify if a release is required
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      issues: read
-    outputs:
-      rc: ${{ steps.rc.outputs.new_release_published }}
-    steps:
-      - name: checkout code
-        uses: actions/checkout@v3
+  # release-prereqs:
+  #   name: Verify if a release is required
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: write
+  #     issues: read
+  #   outputs:
+  #     rc: ${{ steps.rc.outputs.new_release_published }}
+  #   steps:
+  #     - name: checkout code
+  #       uses: actions/checkout@v3
 
-      - name: dry-run sem versioning
-        id: rc
-        uses: cycjimmy/semantic-release-action@v3
-        with:
-          dry_run: true
-          semantic_version: 19.0
-          extra_plugins: |
-            conventional-changelog-conventionalcommits@^5.0.0
-            @semantic-release/git@^10.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: dry-run sem versioning
+  #       id: rc
+  #       uses: cycjimmy/semantic-release-action@v3
+  #       with:
+  #         dry_run: true
+  #         semantic_version: 19.0
+  #         extra_plugins: |
+  #           conventional-changelog-conventionalcommits@^5.0.0
+  #           @semantic-release/git@^10.0.1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: sem ver outputs
-        run: |
-          echo new_release_published - ${{ steps.rc.outputs.new_release_published }}
-          echo new_release_version - ${{ steps.rc.outputs.new_release_version }}
-          echo last_release_version - ${{ steps.rc.outputs.last_release_version }}
+  #     - name: sem ver outputs
+  #       run: |
+  #         echo new_release_published - ${{ steps.rc.outputs.new_release_published }}
+  #         echo new_release_version - ${{ steps.rc.outputs.new_release_version }}
+  #         echo last_release_version - ${{ steps.rc.outputs.last_release_version }}
 
 
   pre_commit:
     name: Pre-Commit
     uses: ./.github/workflows/_pre_commit.yml
-    needs: release-prereqs
+    # needs: release-prereqs
     if: needs.release-prereqs.outputs.rc  == 'true'
     with:
       pre-commit-hooks: terraform_fmt terraform_docs terraform_tflint checkov
@@ -74,8 +73,8 @@ jobs:
 
   tf_prereqs:
     name: validate prerequisites
-    needs: release-prereqs
-    if: needs.release-prereqs.outputs.rc  == 'true'
+    # needs: release-prereqs
+    # if: needs.release-prereqs.outputs.rc  == 'true'
     runs-on: ubuntu-latest
     outputs:
       modules: ${{ steps.paths.outputs.modules }}
@@ -115,33 +114,33 @@ jobs:
       cloud: ${{ inputs.cloud }}
       tf_version: ${{ inputs.tf_version }}
       paths: ${{ needs.tf_prereqs.outputs.examples }}
-      do_apply: ${{ inputs.do_apply }}
+      terratest_action: ${{ inputs.terratest_action }}
       fail_fast: ${{ inputs.fail_fast }}
       max_parallel: ${{ inputs.max_parallel }}
       apply_timeout: ${{ inputs.apply_timeout }}
     secrets: inherit
 
 
-  release:
-    name: release sem version
-    needs:
-      - validate
-      - pre_commit
-      - test
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      issues: read
-    steps:
-      - name: checkout repo
-        uses: actions/checkout@v3
+  # release:
+  #   name: release sem version
+  #   needs:
+  #     - validate
+  #     - pre_commit
+  #     - test
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: write
+  #     issues: read
+  #   steps:
+  #     - name: checkout repo
+  #       uses: actions/checkout@v3
 
-      - name: Create release and publish
-        uses: cycjimmy/semantic-release-action@v3
-        with:
-          semantic_version: 19.0
-          extra_plugins: |
-            conventional-changelog-conventionalcommits@^5.0.0
-            @semantic-release/git@^10.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Create release and publish
+  #       uses: cycjimmy/semantic-release-action@v3
+  #       with:
+  #         semantic_version: 19.0
+  #         extra_plugins: |
+  #           conventional-changelog-conventionalcommits@^5.0.0
+  #           @semantic-release/git@^10.0.1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
