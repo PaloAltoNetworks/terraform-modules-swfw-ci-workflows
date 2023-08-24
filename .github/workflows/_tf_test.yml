@@ -21,6 +21,7 @@ on:
       terratest_action:
         description: The action (name of a test in Terratest) that will be passed to the Makefile's ACTION parameter
         type: string
+        required: true
       fail_fast:
         description: When set to true, GitHub will cancel all in-progress and queued jobs in the matrix if any job in the matrix fails.
         type: boolean
