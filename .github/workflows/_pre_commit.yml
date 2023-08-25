@@ -11,7 +11,7 @@ on:
   workflow_call:
     inputs:
       pre-commit-hooks:
-        description: "Pre-commit hook list . Possible values are a combination of any of the following: terraform_fmt, terraform_docs, terraform_tflint, checkov (space spearated) "
+        description: "Pre-commit hook list. Possible values are a combination of any of the following: terraform_fmt, terraform_docs, terraform_tflint, checkov (space spearated) "
         type: string
         required: true
       pre-commit-files:
@@ -19,11 +19,9 @@ on:
         type: string
         default: "all-files"
         required: false
-      checkout-branch:
-        # description: 
+      branch:
+        description: Branch on which the tests should run
         type: string
-        default: null
-        required: false
 
 jobs:
 
@@ -49,14 +47,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout code
-        if: inputs.checkout-branch == 'null'
-        uses: actions/checkout@v3
-
-      - name: checkout code from branch ${{ inputs.checkout-branch }}
-        if: inputs.checkout-branch != 'null'
         uses: actions/checkout@v3
         with:
-          ref: ${{ inputs.checkout-branch }}
+          ref: ${{ inputs.branch }}
 
       - name: set up Python
         uses: actions/setup-python@v4

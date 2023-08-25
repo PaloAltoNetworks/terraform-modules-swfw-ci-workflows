@@ -1,4 +1,4 @@
-name: (sub) TF plan/apply
+name: (sub) Terratest
 
 permissions:
   contents: read
@@ -73,7 +73,7 @@ jobs:
 
   terraform:
     needs: prerequisites
-    name: 'plan/apply ${{ matrix.path }}@${{ matrix.tf_version }}'
+    name: 'test ${{ matrix.path }}@${{ matrix.tf_version }}'
     permissions:
       contents: read
       id-token: write
@@ -91,7 +91,7 @@ jobs:
         with:
           ref: ${{ inputs.branch }}
 
-      - name: run plan/apply on Azure for ${{ matrix.path }}
+      - name: run tests on Azure for ${{ matrix.path }}
         if: inputs.cloud == 'azure'
         timeout-minutes: ${{ inputs.apply_timeout }}
         uses: ./.github/actions/terratest
@@ -104,7 +104,7 @@ jobs:
           path: ${{ matrix.path }}
           terratest_action: ${{ inputs.terratest_action }}
 
-      - name: run plan/apply on AWS
+      - name: run tests on AWS
         if: inputs.cloud == 'aws'
         timeout-minutes: ${{ inputs.apply_timeout }}
         uses: ./.github/actions/plan_apply
@@ -116,7 +116,7 @@ jobs:
           path: ${{ matrix.path }}
           do_apply: ${{ inputs.do_apply }}
 
-      - name: run plan/apply on GCP
+      - name: run tests on GCP
         if: inputs.cloud == 'gcp'
         run: echo GCP placeholder
 
