@@ -91,7 +91,7 @@ jobs:
         with:
           ref: ${{ inputs.branch }}
 
-      - name: run tests on Azure for ${{ matrix.path }}
+      - name: run ${{ inputs.terratest_action }} tests on Azure for ${{ matrix.path }}
         if: inputs.cloud == 'azure'
         timeout-minutes: ${{ inputs.apply_timeout }}
         uses: ./.github/actions/terratest

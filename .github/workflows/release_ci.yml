@@ -106,7 +106,7 @@ jobs:
 
 
   test:
-    name: run plan and/or apply on examples
+    name: run ${{ inputs.terratest_action }} tests on examples
     needs:
       - validate
       - tf_prereqs

@@ -55,7 +55,7 @@ jobs:
         run: echo "paths=$(echo $IN_PATHS | tr " " "," )" >> $GITHUB_OUTPUT
 
   test:
-    name: Run on-demand tests
+    name: Run on-demand ${{ inputs.terratest_action }}
     needs: init
     uses: ./.github/workflows/_tf_test.yml
     permissions:

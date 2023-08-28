@@ -169,7 +169,7 @@ jobs:
 
 
   test:
-    name: run plan changed examples and dependencies
+    name: run ${{ inputs.terratest_action }} tests on examples
     needs:
       - pre_commit
       - validate
