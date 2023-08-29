@@ -41,6 +41,7 @@ on:
       branch:
         description: Branch on which the tests should run
         type: string
+        required: false
 
 jobs:
 
