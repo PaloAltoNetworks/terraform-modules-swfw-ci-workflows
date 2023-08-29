@@ -74,7 +74,7 @@ jobs:
 
   terraform:
     needs: prerequisites
-    name: 'test ${{ matrix.path }}@${{ matrix.tf_version }}'
+    name: '${{ inputs.terratest_action }} ${{ matrix.path }}@${{ matrix.tf_version }}'
     permissions:
       contents: read
       id-token: write
