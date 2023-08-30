@@ -143,6 +143,8 @@ jobs:
       - name: cleanup Azure Subscription
         if: inputs.cloud == 'azure'
         uses: ./.github/actions/sub_cleanup
+        with:
+          pr-id: ${{ inputs.pr-id }}
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
