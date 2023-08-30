@@ -68,6 +68,7 @@ jobs:
       branch: ${{ inputs.branch }}
       terratest_action: ${{ inputs.terratest_action }}
       fail_fast: false
+      pr-id: ${{ inputs.pr-id }}
     secrets: inherit
   
   finish_comment_pr:
