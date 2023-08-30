@@ -192,6 +192,7 @@ jobs:
       fail_fast: ${{ inputs.fail_fast }}
       max_parallel: ${{ inputs.test_max_parallel }}
       apply_timeout: ${{ inputs.apply_timeout }}
+      pr-id: ${{ github.event.number }}
     secrets: inherit
 
 
