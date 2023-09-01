@@ -44,9 +44,7 @@ jobs:
       - name: update pre-commit dependencies
         id: update
         shell: bash
-        run: | 
-          pre-commit autoupdate | tee -a /tmp/pre-commit-update.log
-          echo "updated_repos=$(cat /tmp/pre-commit-update.log)" >> $GITHUB_OUTPUT
+        run: pre-commit autoupdate
 
       - name: create pull request
         id: pr
@@ -60,9 +58,7 @@ jobs:
           body: |
             # Pre-Commit Dependencies updates required
 
-            There are pre-commit dependencies waiting to be updated:
-
-            ${{ steps.update.outputs.updated_repos }}
+            There are pre-commit dependencies waiting to be updated. Please see the `Files changed` tab for details.
 
             Please check results of `pre-commit` test run with these updates in comments below.
 
