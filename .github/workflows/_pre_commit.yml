@@ -71,7 +71,7 @@ jobs:
         if: ${{ matrix.pre_commit_hook == 'terraform_tflint' }}
         working-directory: /tmp
         run: |
-          curl -sL https://github.com/terraform-linters/tflint/releases/download/v0.46.0/tflint_linux_amd64.zip > tflint.zip
+          curl -sL https://github.com/terraform-linters/tflint/releases/download/v0.47.0/tflint_linux_amd64.zip > tflint.zip
           unzip tflint.zip
           mv tflint /usr/local/bin/
           tflint --version
