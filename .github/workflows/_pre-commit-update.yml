@@ -53,7 +53,7 @@ jobs:
           add-paths: .pre-commit-config.yaml
           branch: ${{ inputs.update_branch }}
           commit-message: "[chore] pre-commit-dependencies-update"
-          title: "[chore] Pre-Commit dependencies update"
+          title: "chore: Pre-Commit dependencies update"
           delete-branch: true
           body: |
             # Pre-Commit Dependencies updates required
