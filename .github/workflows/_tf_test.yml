@@ -129,7 +129,7 @@ jobs:
         uses: ./.github/actions/terratest
         env:
           WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
-          GCP_SERVICE_ACCOUNT: ${{ GCP_SERVICE_ACCOUNT }}
+          GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
         with:
           tf_version: ${{ matrix.tf_version }}
           path: ${{ matrix.path }}
