@@ -32,56 +32,12 @@ jobs:
       - name: checkout repository
         uses: actions/checkout@v3
 
-      - name: install Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
-
-      - name: install Python requirements
-        shell: bash
-        run: python -m pip install pyyaml>=6 requests>=2
-
-      - name: run the update script
+      - name: update pre-commit dependencies
         id: update
-        shell: python
+        shell: bash
         run: | 
-          import os
-          import yaml
-          import requests
-          from urllib.parse import urlparse
-          
-
-          pre_commit_config_path = "./.pre-commit-config.yaml"
-
-          with open(pre_commit_config_path, "r") as pre_commit:
-              try:
-                  pre_commit_config = yaml.safe_load(pre_commit)
-              except yaml.YAMLError as exc:
-                  print(exc)
-                  exit(1)
-          
-          updates = dict()
-
-          for repo in pre_commit_config['repos']:
-              repo_url = repo['repo'].replace('.git','') if '.git' in repo['repo'] else repo['repo']
-              release = repo['rev']
-              headers = {'Accept': 'application/json'}
-              resp = requests.get(f"{repo_url}/refs?type=tag", headers=headers)
-              if resp.status_code == requests.codes.ok:
-                  latest_release = resp.json()['refs'][0]
-                  if release != latest_release:
-                      print(f'{repo_url} needs to be updated to {latest_release}, currently at {release}')
-                      repo['rev'] = latest_release
-                      updates[urlparse(repo_url).path[1:]] = {'current': release, 'latest': latest_release}
-              
-          with open(pre_commit_config_path, 'w') as pre_commit:
-              yaml.dump(pre_commit_config, pre_commit, default_flow_style=False)
-
-          if updates:
-            print(updates)
-            updated_repos = ' '.join([ f"<li>{k}: {v['current']} -> {v['latest']}</li>" for k,v in updates.items()])
-            with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-              output.write(f"updated_repos={updated_repos}")
+          pre-commit autoupdate | tee -a /tmp/pre-commit-update.log
+          echo "updated_repos=$(cat /tmp/pre-commit-update.log)" >> $GITHUB_OUTPUT
 
       - name: create pull request
         id: pr
@@ -97,9 +53,7 @@ jobs:
 
             There are pre-commit dependencies waiting to be updated:
 
-            <ul>
             ${{ steps.update.outputs.updated_repos }}
-            </ul>
 
             Please check results of `pre-commit` test run with these updates in comments below.
 

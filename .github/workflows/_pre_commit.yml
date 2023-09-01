@@ -11,7 +11,7 @@ on:
   workflow_call:
     inputs:
       pre-commit-hooks:
-        description: "Pre-commit hook list . Possible values are a combination of any of the following: terraform_fmt, terraform_docs, terraform_tflint, checkov (space spearated) "
+        description: "Pre-commit hook list. Possible values are a combination of any of the following: terraform_fmt, terraform_docs, terraform_tflint, checkov (space spearated) "
         type: string
         required: true
       pre-commit-files:
@@ -62,6 +62,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+          cache: pip
 
       - name: install TF Docs
         if: ${{ matrix.pre_commit_hook == 'terraform_docs' }}
@@ -76,13 +77,20 @@ jobs:
         if: ${{ matrix.pre_commit_hook == 'terraform_tflint' }}
         working-directory: /tmp
         run: |
-          curl -sL https://github.com/terraform-linters/tflint/releases/download/v0.46.0/tflint_linux_amd64.zip > tflint.zip
+          curl -sL https://github.com/terraform-linters/tflint/releases/download/v0.47.0/tflint_linux_amd64.zip > tflint.zip
           unzip tflint.zip
           mv tflint /usr/local/bin/
           tflint --version
 
       - name: install pre-commit
-        run: python3 -m pip install "pre-commit>=3"
+        run: python3 -m pip install -r requirements.txt
+
+      - name: cache pre-commit dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: ${{ runner.os }}-pre-commit-
 
       - name: run pre-commit terraform_fmt
         shell: bash
