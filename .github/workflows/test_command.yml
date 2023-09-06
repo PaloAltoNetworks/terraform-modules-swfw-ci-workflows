@@ -1,0 +1,91 @@
+name: ChatOPS tester
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      paths:
+        description: Space delimited list of module paths to test
+        type: string
+        required: true
+      tf_version:
+        description: Terraform versions to use for tests, comma-separated list
+        type: string
+      pr-id:
+        description: ID of the PR that triggered this workflow
+        type: string
+        required: true
+      comment-id:
+        description: 'The comment-id of the slash command'
+        type: string
+        required: true
+      branch:
+        description: Branch on which the tests should run
+        type: string
+        default: main
+      terratest_action:
+        description: The action (name of a test in Terratest) that will be passed to the Makefile's ACTION parameter
+        type: string
+        required: true
+
+jobs:
+  init:
+    name: Add a comment to originating PR with job ID
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    outputs:
+      paths: ${{ steps.paths_reformat.outputs.paths }}
+    steps:
+      - name: add comment
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          comment-id: ${{ inputs.comment-id }}
+          issue-number: ${{ inputs.pr-id }}
+          body: |
+            > Testing job ID: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+      - name: reformat paths input property
+        id: paths_reformat
+        env:
+          IN_PATHS: ${{ inputs.paths }}
+        run: echo "paths=$(echo $IN_PATHS | tr " " "," )" >> $GITHUB_OUTPUT
+
+  test:
+    name: Run on-demand ${{ inputs.terratest_action }}
+    needs: init
+    uses: ./.github/workflows/_tf_test.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      cloud: azure
+      tf_version: ${{ inputs.tf_version }}
+      paths: ${{ needs.init.outputs.paths }}
+      branch: ${{ inputs.branch }}
+      terratest_action: ${{ inputs.terratest_action }}
+      fail_fast: false
+      pr-id: ${{ inputs.pr-id }}
+    secrets: inherit
+  
+  finish_comment_pr:
+    name: Add a comment to originating PR
+    needs: test
+    if: always()
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: add comment
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          comment-id: ${{ inputs.comment-id }}
+          issue-number: ${{ inputs.pr-id }}
+          body: |
+            > Job result: ${{ needs.test.result == 'success' && 'SUCCESS' || 'FAILURE' }}
+          reactions: ${{ needs.test.result == 'success' && '+1' || '-1' }}
+          reactions-edit-mode: replace

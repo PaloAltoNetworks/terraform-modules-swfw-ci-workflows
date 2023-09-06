@@ -1,4 +1,4 @@
-name: TF Code Release CI
+name: (sub) Release CI
 
 permissions:
   contents: read
@@ -6,18 +6,22 @@ permissions:
 on:
   workflow_call:
     inputs:
-      do_apply:
-        description: When set to true runs also apply
-        type: boolean
-        default: false
+      terratest_action:
+        description: The action (name of a test in Terratest) that will be passed to the Makefile's ACTION parameter
+        type: string
+        required: true
       fail_fast:
         description: When set to true, GitHub will cancel all in-progress and queued jobs in the matrix if any job in the matrix fails.
         type: boolean
         default: true
-      max_parallel:
-        description: Maximum parallel jobs in matrix strategy
+      validate_max_parallel:
+        description: Maximum parallel jobs in matrix strategy for running validation
         type: number
-        default: 10
+        default: 5
+      test_max_parallel:
+        description: Maximum parallel jobs in matrix strategy for running Terratest
+        type: number
+        default: 5
       apply_timeout:
         description: Maximum time to run the Terraform apply step
         type: number
@@ -98,11 +102,11 @@ jobs:
     with:
       tf_version: ${{ inputs.tf_version }}
       paths: ${{ needs.tf_prereqs.outputs.modules }}
-      max_parallel: ${{ inputs.max_parallel }}
+      max_parallel: ${{ inputs.validate_max_parallel }}
 
 
   test:
-    name: run plan and/or apply on examples
+    name: run ${{ inputs.terratest_action }} tests on examples
     needs:
       - validate
       - tf_prereqs
@@ -115,9 +119,9 @@ jobs:
       cloud: ${{ inputs.cloud }}
       tf_version: ${{ inputs.tf_version }}
       paths: ${{ needs.tf_prereqs.outputs.examples }}
-      do_apply: ${{ inputs.do_apply }}
+      terratest_action: ${{ inputs.terratest_action }}
       fail_fast: ${{ inputs.fail_fast }}
-      max_parallel: ${{ inputs.max_parallel }}
+      max_parallel: ${{ inputs.test_max_parallel }}
       apply_timeout: ${{ inputs.apply_timeout }}
     secrets: inherit
 
