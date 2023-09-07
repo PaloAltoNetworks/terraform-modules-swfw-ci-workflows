@@ -46,7 +46,7 @@ jobs:
       rc: ${{ steps.rc.outputs.new_release_published }}
     steps:
       - name: checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: dry-run sem versioning
         id: rc
@@ -86,7 +86,7 @@ jobs:
       examples: ${{ steps.paths.outputs.examples }}
     steps:
       - name: checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: set outputs
         id: paths
         shell: bash
@@ -138,7 +138,7 @@ jobs:
       issues: read
     steps:
       - name: checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Create release and publish
         uses: cycjimmy/semantic-release-action@v3
