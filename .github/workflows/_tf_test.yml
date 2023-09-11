@@ -114,14 +114,15 @@ jobs:
       - name: run tests on AWS
         if: inputs.cloud == 'aws'
         timeout-minutes: ${{ inputs.apply_timeout }}
-        uses: ./.github/actions/plan_apply
+        uses: ./.github/actions/terratest
         env:
           ASSUME_ROLE: ${{ secrets.ASSUME_ROLE }}
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           tf_version: ${{ matrix.tf_version }}
           path: ${{ matrix.path }}
-          do_apply: ${{ inputs.do_apply }}
+          terratest_action: ${{ inputs.terratest_action }}
+          pr-id: ${{ inputs.pr-id }}
 
       - name: run tests on GCP
         if: inputs.cloud == 'gcp'
