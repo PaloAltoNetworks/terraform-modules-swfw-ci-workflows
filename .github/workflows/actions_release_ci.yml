@@ -38,20 +38,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: release info
-        run: |
-          echo new_release_published - ${{ steps.rc.outputs.new_release_published }}
-          echo new_release_version - ${{ steps.rc.outputs.new_release_version }}
-          echo last_release_version - ${{ steps.rc.outputs.last_release_version }}
-          echo new_release_major_version - ${{ steps.rc.outputs.new_release_major_version }}
-      
       - name: create major release tag
         if: steps.rc.outputs.new_release_published == 'true'
         env:
           MAJOR: ${{ steps.rc.outputs.new_release_major_version }}
+          MINOR: ${{ steps.rc.outputs.new_release_minor_version }}
           RELEASE: ${{ steps.rc.outputs.new_release_version }}
         run: |
           git config --global user.email "bot@github.com"
           git config --global user.name "github-bot"
           git tag -f "v$MAJOR" "v$RELEASE"
+          git tag -f "v$MAJOR.$MINOR" "v$RELEASE"
           git push origin "v$MAJOR" --force
