@@ -50,3 +50,4 @@ jobs:
           git tag -f "v$MAJOR" "v$RELEASE"
           git tag -f "v$MAJOR.$MINOR" "v$RELEASE"
           git push origin "v$MAJOR" --force
+          git push origin "v$MAJOR.$MINOR" --force
