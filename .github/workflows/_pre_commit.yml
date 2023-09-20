@@ -48,12 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout code
-        if: inputs.checkout-branch == 'null'
-        uses: actions/checkout@v3
-
-      - name: checkout code from branch ${{ inputs.checkout-branch }}
-        if: inputs.checkout-branch != 'null'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ inputs.branch }}
 
