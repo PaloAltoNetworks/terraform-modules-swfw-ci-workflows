@@ -6,8 +6,9 @@ permissions:
   issues: read
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 1 * * 3' # this means every Wednesday @1am UTC
 
 jobs:
 
@@ -24,11 +25,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: sem release
         id: rc
-        uses: cycjimmy/semantic-release-action@v3
+        uses: cycjimmy/semantic-release-action@v4
         with:
           semantic_version: 19.0
           extra_plugins: |
@@ -37,20 +38,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: release info
-        run: |
-          echo new_release_published - ${{ steps.rc.outputs.new_release_published }}
-          echo new_release_version - ${{ steps.rc.outputs.new_release_version }}
-          echo last_release_version - ${{ steps.rc.outputs.last_release_version }}
-          echo new_release_major_version - ${{ steps.rc.outputs.new_release_major_version }}
-      
       - name: create major release tag
         if: steps.rc.outputs.new_release_published == 'true'
         env:
           MAJOR: ${{ steps.rc.outputs.new_release_major_version }}
+          MINOR: ${{ steps.rc.outputs.new_release_minor_version }}
           RELEASE: ${{ steps.rc.outputs.new_release_version }}
         run: |
           git config --global user.email "bot@github.com"
           git config --global user.name "github-bot"
           git tag -f "v$MAJOR" "v$RELEASE"
+          git tag -f "v$MAJOR.$MINOR" "v$RELEASE"
           git push origin "v$MAJOR" --force
+          git push origin "v$MAJOR.$MINOR" --force
