@@ -131,6 +131,7 @@ jobs:
         env:
           WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
           GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          PROJECT_ID: ${{ secrets.PROJECT_ID}}
         with:
           tf_version: ${{ matrix.tf_version }}
           path: ${{ matrix.path }}
