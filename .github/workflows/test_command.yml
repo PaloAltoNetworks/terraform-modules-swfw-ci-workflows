@@ -29,6 +29,10 @@ on:
         description: Branch on which the tests should run
         type: string
         default: main
+      repository:
+        description: Repository on which the tests should run
+        type: string
+        required: false
       terratest_action:
         description: The action (name of a test in Terratest) that will be passed to the Makefile's ACTION parameter
         type: string
@@ -70,6 +74,7 @@ jobs:
       tf_version: ${{ inputs.tf_version }}
       paths: ${{ needs.init.outputs.paths }}
       branch: ${{ inputs.branch }}
+      repository: ${{ inputs.repository }}
       terratest_action: ${{ inputs.terratest_action }}
       fail_fast: false
       pr-id: ${{ inputs.pr-id }}
