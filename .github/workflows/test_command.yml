@@ -37,6 +37,10 @@ on:
         description: The action (name of a test in Terratest) that will be passed to the Makefile's ACTION parameter
         type: string
         required: true
+      apply_timeout:
+        description: Maximum time to run the Terraform apply step
+        type: number
+        default: 30
 
 jobs:
   init:
@@ -78,6 +82,7 @@ jobs:
       terratest_action: ${{ inputs.terratest_action }}
       fail_fast: false
       pr-id: ${{ inputs.pr-id }}
+      apply_timeout: ${{ inputs.apply_timeout }}
     secrets: inherit
   
   finish_comment_pr:
