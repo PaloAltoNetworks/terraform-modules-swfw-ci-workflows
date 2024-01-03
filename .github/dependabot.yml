@@ -11,9 +11,16 @@ updates:
     schedule:
       # Check for updates to GitHub Actions every week
       interval: "weekly"
+    commit-message:
+      # Prefix all commit messages with "fix: "
+      prefix: "fix"
 
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       # Check for updates to GitHub Actions every week
       interval: "monthly"
+    commit-message:
+      # Prefix all commit messages with "fix: "
+      prefix: "fix"
+      include: "scope"
