@@ -14,6 +14,7 @@ updates:
     commit-message:
       # Prefix all commit messages with "fix: "
       prefix: "fix"
+      include: "scope"
 
   - package-ecosystem: "pip"
     directory: "/"
