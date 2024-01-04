@@ -12,8 +12,8 @@ updates:
       # Check for updates to GitHub Actions every week
       interval: "weekly"
     commit-message:
-      # Prefix all commit messages with "fix: "
-      prefix: "fix"
+      # Prefix all commit messages with "CHANGEME: "
+      prefix: "CHANGEME"
       include: "scope"
 
   - package-ecosystem: "pip"
@@ -21,7 +21,3 @@ updates:
     schedule:
       # Check for updates to GitHub Actions every week
       interval: "monthly"
-    commit-message:
-      # Prefix all commit messages with "fix: "
-      prefix: "fix"
-      include: "scope"
