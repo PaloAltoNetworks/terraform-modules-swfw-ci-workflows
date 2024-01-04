@@ -11,6 +11,10 @@ updates:
     schedule:
       # Check for updates to GitHub Actions every week
       interval: "weekly"
+    commit-message:
+      # Prefix all commit messages with "CHANGEME: "
+      prefix: "CHANGEME"
+      include: "scope"
 
   - package-ecosystem: "pip"
     directory: "/"
