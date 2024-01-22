@@ -85,7 +85,7 @@ jobs:
         run: python3 -m pip install -r requirements.txt
 
       - name: cache pre-commit dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
           key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
