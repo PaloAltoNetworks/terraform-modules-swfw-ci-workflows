@@ -123,6 +123,7 @@ jobs:
         env:
           ASSUME_ROLE: ${{ secrets.ASSUME_ROLE }}
           AWS_REGION: ${{ vars.AWS_REGION }}
+          PROVIDER_ACCOUNT: ${{ secrets.PROVIDER_ACCOUNT }}
         with:
           tf_version: ${{ matrix.tf_version }}
           path: ${{ matrix.path }}
