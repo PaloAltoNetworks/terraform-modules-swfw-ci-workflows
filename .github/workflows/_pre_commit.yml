@@ -71,7 +71,7 @@ jobs:
         if: ${{ matrix.pre_commit_hook == 'terraform_docs' }}
         working-directory: /tmp
         run: |
-          curl -sL https://github.com/terraform-docs/terraform-docs/releases/download/v0.16.0/terraform-docs-v0.16.0-linux-amd64.tar.gz > terraform-docs.tar.gz 
+          curl -sL https://github.com/terraform-docs/terraform-docs/releases/download/v0.19.0/terraform-docs-v0.19.0-linux-amd64.tar.gz > terraform-docs.tar.gz
           tar zxf terraform-docs.tar.gz
           mv terraform-docs /usr/local/bin/
           terraform-docs --version
@@ -80,7 +80,7 @@ jobs:
         if: ${{ matrix.pre_commit_hook == 'terraform_tflint' }}
         working-directory: /tmp
         run: |
-          curl -sL https://github.com/terraform-linters/tflint/releases/download/v0.48.0/tflint_linux_amd64.zip > tflint.zip
+          curl -sL https://github.com/terraform-linters/tflint/releases/download/v0.55.0/tflint_linux_amd64.zip > tflint.zip
           unzip tflint.zip
           mv tflint /usr/local/bin/
           tflint --version
