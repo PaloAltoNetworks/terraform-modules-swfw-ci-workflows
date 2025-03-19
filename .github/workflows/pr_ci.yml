@@ -4,7 +4,6 @@ permissions:
   contents: read
   id-token: write
 
-
 on:
   workflow_call:
     inputs:
@@ -42,7 +41,6 @@ on:
         default: terraform_fmt terraform_docs terraform_tflint checkov
 
 jobs:
-
   tf_prereqs:
     name: terraform modules discovery
     runs-on: ubuntu-latest
@@ -58,21 +56,21 @@ jobs:
 
       - name: get diff with base branch, modules
         id: diff_modules
-        uses: tj-actions/changed-files@v44
+        uses: tj-actions/changed-files@2f7c5bfce28377bc069a65ba478de0a74aa0ca32
         with:
           separator: "@"
           files: modules/**/*.tf
 
       - name: get diff with base branch, examples
         id: diff_examples
-        uses: tj-actions/changed-files@v44
+        uses: tj-actions/changed-files@2f7c5bfce28377bc069a65ba478de0a74aa0ca32
         with:
           separator: "@"
           files: examples/**/*.tf
 
       - name: get diff with base branch, examples, varfiles
         id: diff_tfvars
-        uses: tj-actions/changed-files@v44
+        uses: tj-actions/changed-files@2f7c5bfce28377bc069a65ba478de0a74aa0ca32
         with:
           separator: "@"
           files: examples/**/*.tfvars
@@ -144,7 +142,6 @@ jobs:
           # a list of changed files, used for pre-commit tasks
           echo "files_diff=${FILES_PRECOMMIT[*]}" >> $GITHUB_OUTPUT
 
-
   pre_commit:
     name: Pre-Commit
     needs: tf_prereqs
@@ -153,7 +150,6 @@ jobs:
     with:
       pre-commit-hooks: ${{ inputs.pre-commit-hooks }}
       pre-commit-files: ${{ needs.tf_prereqs.outputs.changed_files }}
-
 
   validate:
     name: validate all changed modules
@@ -171,7 +167,6 @@ jobs:
       fail_fast: ${{ inputs.fail_fast }}
       max_parallel: ${{ inputs.validate_max_parallel }}
     secrets: inherit
-
 
   test:
     name: run ${{ inputs.terratest_action }} tests on examples
@@ -194,7 +189,6 @@ jobs:
       apply_timeout: ${{ inputs.apply_timeout }}
       pr-id: ${{ github.event.number }}
     secrets: inherit
-
 
   branch_protection_junction:
     name: junction point for branch protection
