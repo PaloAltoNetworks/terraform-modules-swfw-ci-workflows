@@ -25,10 +25,10 @@ on:
         description: "Decide against which public cloud the code will be run. Possible values: azure, aws, gcp"
         type: string
         required: true
-      branch:
-        description: Branch on which the tests should run
+      commitsha:
+        description: Commit SHA for which the tests should run
         type: string
-        default: main
+        required: true
       repository:
         description: Repository on which the tests should run
         type: string
@@ -77,7 +77,7 @@ jobs:
       cloud: ${{ inputs.cloud }}
       tf_version: ${{ inputs.tf_version }}
       paths: ${{ needs.init.outputs.paths }}
-      branch: ${{ inputs.branch }}
+      commitsha: ${{ inputs.commitsha }}
       repository: ${{ inputs.repository }}
       terratest_action: ${{ inputs.terratest_action }}
       fail_fast: false
