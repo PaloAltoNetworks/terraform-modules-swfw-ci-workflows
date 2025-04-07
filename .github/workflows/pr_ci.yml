@@ -56,21 +56,21 @@ jobs:
 
       - name: get diff with base branch, modules
         id: diff_modules
-        uses: tj-actions/changed-files@2f7c5bfce28377bc069a65ba478de0a74aa0ca32
+        uses: tj-actions/changed-files@6cb76d07bee4c9772c6882c06c37837bf82a04d3
         with:
           separator: "@"
           files: modules/**/*.tf
 
       - name: get diff with base branch, examples
         id: diff_examples
-        uses: tj-actions/changed-files@2f7c5bfce28377bc069a65ba478de0a74aa0ca32
+        uses: tj-actions/changed-files@6cb76d07bee4c9772c6882c06c37837bf82a04d3
         with:
           separator: "@"
           files: examples/**/*.tf
 
       - name: get diff with base branch, examples, varfiles
         id: diff_tfvars
-        uses: tj-actions/changed-files@2f7c5bfce28377bc069a65ba478de0a74aa0ca32
+        uses: tj-actions/changed-files@6cb76d07bee4c9772c6882c06c37837bf82a04d3
         with:
           separator: "@"
           files: examples/**/*.tfvars
