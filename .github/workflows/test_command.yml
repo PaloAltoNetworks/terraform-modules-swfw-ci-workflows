@@ -28,7 +28,7 @@ on:
       commitsha:
         description: Commit SHA for which the tests should run
         type: string
-        required: false
+        default: main
       repository:
         description: Repository on which the tests should run
         type: string
