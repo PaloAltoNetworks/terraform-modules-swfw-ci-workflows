@@ -55,8 +55,8 @@ jobs:
           dry_run: true
           semantic_version: 19.0
           extra_plugins: |
-            conventional-changelog-conventionalcommits@ba6df7cf62de5f448368bed4398f6ddf633d2cbd
-            @semantic-release/git@3e934d45f97fd07a63617c0fc098c9ed3e67d97a
+            https://gitpkg.vercel.app/conventional-changelog/conventional-changelog/packages/conventional-changelog-conventionalcommits?ba6df7cf62de5f448368bed4398f6ddf633d2cbd
+            semantic-release/git#3e934d45f97fd07a63617c0fc098c9ed3e67d97a
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -65,7 +65,6 @@ jobs:
           echo new_release_published - ${{ steps.rc.outputs.new_release_published }}
           echo new_release_version - ${{ steps.rc.outputs.new_release_version }}
           echo last_release_version - ${{ steps.rc.outputs.last_release_version }}
-
 
   pre_commit:
     name: Pre-Commit
@@ -111,7 +110,6 @@ jobs:
       max_parallel: ${{ inputs.validate_max_parallel }}
     secrets: inherit
 
-
   test:
     name: run ${{ inputs.terratest_action }} tests on examples
     needs:
@@ -132,7 +130,6 @@ jobs:
       apply_timeout: ${{ inputs.apply_timeout }}
     secrets: inherit
 
-
   release:
     name: release sem version
     needs:
@@ -152,7 +149,7 @@ jobs:
         with:
           semantic_version: 19.0
           extra_plugins: |
-            conventional-changelog-conventionalcommits@ba6df7cf62de5f448368bed4398f6ddf633d2cbd
-            @semantic-release/git@3e934d45f97fd07a63617c0fc098c9ed3e67d97a
+            https://gitpkg.vercel.app/conventional-changelog/conventional-changelog/packages/conventional-changelog-conventionalcommits?ba6df7cf62de5f448368bed4398f6ddf633d2cbd
+            semantic-release/git#3e934d45f97fd07a63617c0fc098c9ed3e67d97a
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
