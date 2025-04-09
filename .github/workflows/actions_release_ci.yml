@@ -8,10 +8,9 @@ permissions:
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 1 * * 3' # this means every Wednesday @1am UTC
+    - cron: "0 1 * * 3" # this means every Wednesday @1am UTC
 
 jobs:
-
   pre_commit:
     name: Pre-Commit
     uses: ./.github/workflows/_pre_commit.yml
@@ -20,7 +19,7 @@ jobs:
 
   release:
     name: Semantic release
-    needs: 
+    needs:
       - pre_commit
     runs-on: ubuntu-latest
     steps:
@@ -33,11 +32,11 @@ jobs:
         with:
           semantic_version: 19.0
           extra_plugins: |
-            conventional-changelog-conventionalcommits@ba6df7cf62de5f448368bed4398f6ddf633d2cbd
-            @semantic-release/git@3e934d45f97fd07a63617c0fc098c9ed3e67d97a
+            https://gitpkg.vercel.app/conventional-changelog/conventional-changelog/packages/conventional-changelog-conventionalcommits?ba6df7cf62de5f448368bed4398f6ddf633d2cbd
+            semantic-release/git#3e934d45f97fd07a63617c0fc098c9ed3e67d97a
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: create major release tag
         if: steps.rc.outputs.new_release_published == 'true'
         env:
