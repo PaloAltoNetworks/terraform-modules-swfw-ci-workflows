@@ -19,8 +19,8 @@ on:
         type: string
         default: "all-files"
         required: false
-      branch:
-        description: Branch on which the tests should run
+      commitsha:
+        description: Commit SHA for which the tests should run
         type: string
         required: false
       repository:
@@ -53,7 +53,7 @@ jobs:
       - name: checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
-          ref: ${{ inputs.branch }}
+          ref: ${{ inputs.commitsha }}
           repository: ${{ inputs.repository }}
 
       - name: set up Python
