@@ -50,7 +50,7 @@ jobs:
 
       - name: dry-run sem versioning
         id: rc
-        uses: cycjimmy/semantic-release-action@0a51e81a6baff2acad3ee88f4121c589c73d0f0e # v4
+        uses: cycjimmy/semantic-release-action@c4a2fa890676fc2db25ad0aacd8ab4a0f1f4c024 # v4
         with:
           dry_run: true
           semantic_version: 19.0
@@ -145,7 +145,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Create release and publish
-        uses: cycjimmy/semantic-release-action@0a51e81a6baff2acad3ee88f4121c589c73d0f0e # v4
+        uses: cycjimmy/semantic-release-action@c4a2fa890676fc2db25ad0aacd8ab4a0f1f4c024 # v4
         with:
           semantic_version: 19.0
           extra_plugins: |
