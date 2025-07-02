@@ -74,7 +74,7 @@ jobs:
         if: ${{ matrix.pre_commit_hook == 'terraform_docs' }}
         working-directory: /tmp
         run: |
-          curl -sL https://github.com/terraform-docs/terraform-docs/releases/download/v0.16.0/terraform-docs-v0.16.0-linux-amd64.tar.gz > terraform-docs.tar.gz 
+          curl -sL https://github.com/terraform-docs/terraform-docs/releases/download/v0.20.0/terraform-docs-v0.20.0-linux-amd64.tar.gz > terraform-docs.tar.gz 
           tar zxf terraform-docs.tar.gz
           mv terraform-docs /usr/local/bin/
           terraform-docs --version
