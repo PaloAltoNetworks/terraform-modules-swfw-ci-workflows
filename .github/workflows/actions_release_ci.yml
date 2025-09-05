@@ -28,7 +28,7 @@ jobs:
 
       - name: sem release
         id: rc
-        uses: cycjimmy/semantic-release-action@0a51e81a6baff2acad3ee88f4121c589c73d0f0e # v4
+        uses: cycjimmy/semantic-release-action@9cc899c47e6841430bbaedb43de1560a568dfd16 # v4
         with:
           semantic_version: 19.0
           extra_plugins: |
