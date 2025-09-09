@@ -87,6 +87,8 @@ jobs:
       contents: read
       id-token: write
     runs-on: ubuntu-latest
+    env:
+      cngfw_exclude: "['examples/cloudngfw_isolated_design', 'examples/cloudngfw_combined_design', 'examples/cloudngfw_centralized_design', 'examples/cloudngfw_distributed_design']"
     strategy:
       max-parallel: ${{ inputs.max_parallel }}
       fail-fast: ${{ inputs.fail_fast }}
@@ -115,7 +117,7 @@ jobs:
           pr-id: ${{ inputs.pr-id }}
 
       - name: run tests on AWS
-        if: inputs.cloud == 'aws' && matrix.path != 'examples/cloudngfw_isolated_design' && matrix.path != 'examples/cloudngfw_combined_design'
+        if: inputs.cloud == 'aws' && !contains(fromJson(env.cngfw_exclude), matrix.path)
         timeout-minutes: ${{ inputs.apply_timeout }}
         uses: ./.github/actions/terratest
         env:
