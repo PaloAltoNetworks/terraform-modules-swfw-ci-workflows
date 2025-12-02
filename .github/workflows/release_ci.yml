@@ -53,10 +53,10 @@ jobs:
         uses: cycjimmy/semantic-release-action@0a51e81a6baff2acad3ee88f4121c589c73d0f0e # v4
         with:
           dry_run: true
-          semantic_version: 19.0
+          semantic_version: 25.0
           extra_plugins: |
-            https://gitpkg.vercel.app/conventional-changelog/conventional-changelog/packages/conventional-changelog-conventionalcommits?ba6df7cf62de5f448368bed4398f6ddf633d2cbd
-            semantic-release/git#3e934d45f97fd07a63617c0fc098c9ed3e67d97a
+              conventional-changelog-conventionalcommits@9.1.0
+              semantic-release/git#3e934d45f97fd07a63617c0fc098c9ed3e67d97a
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -147,9 +147,9 @@ jobs:
       - name: Create release and publish
         uses: cycjimmy/semantic-release-action@0a51e81a6baff2acad3ee88f4121c589c73d0f0e # v4
         with:
-          semantic_version: 19.0
+          semantic_version: 25.0
           extra_plugins: |
-            https://gitpkg.vercel.app/conventional-changelog/conventional-changelog/packages/conventional-changelog-conventionalcommits?ba6df7cf62de5f448368bed4398f6ddf633d2cbd
-            semantic-release/git#3e934d45f97fd07a63617c0fc098c9ed3e67d97a
+              conventional-changelog-conventionalcommits@9.1.0
+              semantic-release/git#3e934d45f97fd07a63617c0fc098c9ed3e67d97a
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
