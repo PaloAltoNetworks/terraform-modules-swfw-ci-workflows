@@ -172,5 +172,10 @@ jobs:
 
       - name: cleanup GCP
         if: inputs.cloud == 'gcp'
-        run: echo GCP placeholder
-
+        uses: ./.github/actions/gcp_cleanup
+        with:
+          pr-id: ${{ inputs.pr-id }}
+        env:
+          WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          PROJECT_ID: ${{ secrets.PROJECT_ID }}
